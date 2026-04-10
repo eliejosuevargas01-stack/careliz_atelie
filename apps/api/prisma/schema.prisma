@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id           String             @id @default(cuid())
+  name         String
+  phone        String             @unique
+  origin       String?
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  events       CalendarEvent[]
+  productions  ProductionTask[]
+  interactions InteractionHistory[]
+}
+
+model Professional {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  name      String
+  phone     String?
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  events    CalendarEvent[]
+}
+
+model ServiceCatalog {
+  id                   String          @id @default(cuid())
+  pieceCode            Int
+  serviceCode          Int
+  pieceType            String
+  serviceType          String
+  pieceName            String
+  serviceName          String
+  estimatedPrice       Float?
+  estimatedDurationMin Int             @default(30)
+  active               Boolean         @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  events               CalendarEvent[]
+  productions          ProductionTask[]
+
+  @@index([pieceType, serviceType])
+  @@unique([pieceType, serviceType])
+  @@unique([pieceCode, serviceCode])
+}
+
+model CalendarEvent {
+  id                    String              @id @default(cuid())
+  clientId              String?
+  professionalId        String?
+  serviceCatalogId      String?
+  typeEvent             String
+  typeAttendance        String?
+  status                String
+  startAt               DateTime
+  endAt                 DateTime
+  durationMin           Int
+  pieceName             String?
+  serviceName           String?
+  description           String?
+  internalNotes         String?
+  origin                String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  client                Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  professional          Professional?       @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  serviceCatalog        ServiceCatalog?     @relation(fields: [serviceCatalogId], references: [id], onDelete: SetNull)
+  originProductionTasks ProductionTask[]    @relation("OriginAppointment")
+  productionRecord      ProductionTask?     @relation("ProductionCalendarEvent")
+  interactions          InteractionHistory[]
+
+  @@index([startAt, endAt])
+  @@index([status])
+  @@index([typeEvent])
+}
+
+model ProductionTask {
+  id                String         @id @default(cuid())
+  appointmentOriginId String?
+  calendarEventId   String?        @unique
+  clientId          String?
+  serviceCatalogId  String?
+  pieceName         String?
+  serviceName       String?
+  promisedDate      DateTime?
+  estimatedTimeMin  Int
+  reservedTimeMin   Int
+  productionStatus  String
+  notes             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  appointmentOrigin CalendarEvent? @relation("OriginAppointment", fields: [appointmentOriginId], references: [id], onDelete: SetNull)
+  calendarEvent     CalendarEvent? @relation("ProductionCalendarEvent", fields: [calendarEventId], references: [id], onDelete: SetNull)
+  client            Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  serviceCatalog    ServiceCatalog? @relation(fields: [serviceCatalogId], references: [id], onDelete: SetNull)
+
+  @@index([productionStatus])
+  @@index([promisedDate])
+}
+
+model AvailabilityWindow {
+  id              String   @id @default(cuid())
+  weekday         Int
+  label           String?
+  startTime       String
+  endTime         String
+  active          Boolean  @default(true)
+  intervalMin     Int      @default(10)
+  slotDurationMin Int      @default(30)
+  capacityPerSlot Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([weekday, active])
+  @@unique([weekday, startTime, endTime])
+}
+
+model CalendarBlock {
+  id        String   @id @default(cuid())
+  startAt   DateTime
+  endAt     DateTime
+  reason    String?
+  blockType String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startAt, endAt])
+}
+
+model InteractionHistory {
+  id          String         @id @default(cuid())
+  clientId    String
+  eventId     String?
+  channel     String
+  message     String
+  author      String
+  eventAt     DateTime
+  metadata    String?
+  createdAt   DateTime       @default(now())
+  client      Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  event       CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([eventAt])
+  @@index([channel])
+}
+
+model AgentSession {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  stage           String
+  lead            Json?
+  business        Json?
+  context         Json?
+  messages        Json?
+  lastAction      String?
+  nextAction      String?
+  pieceCode       Int?
+  pieceType       String?
+  serviceCode     Int?
+  serviceType     String?
+  preferredDate   String?
+  preferredPeriod String?
+  scheduleTime    String?
+  customerLabel   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([stage])
+}

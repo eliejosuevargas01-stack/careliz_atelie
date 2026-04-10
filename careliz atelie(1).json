@@ -1,0 +1,4474 @@
+{
+  "name": "careliz atelie",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        3968,
+        3584
+      ],
+      "id": "ea84999a-4882-49b9-9b49-5ee2a1bbde7b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $json.jid }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ `🔍 Precisa ajustar ou consertar sua roupa?\n\nNo Careliz Ateliê, oferecemos ajustes e reparos com qualidade e rapidez em Gaspar e região 👗\n\n💼 Serviços:\n\n• Ajustes (manga, lateral, cós, quadril)\n• Barra (camisa, vestido, jeans)\n• Troca de zíper e botões\n• Ajustes em camisas e calças\n\n👕 Para homens, mulheres e crianças\n💸 Preços acessíveis\n\n📞 WhatsApp:\n(92) 98513-3027\n(92) 98465-5004\n\n✨ Deixe suas roupas com caimento perfeito!` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4688,
+        3584
+      ],
+      "id": "44da7e48-afb1-4a68-b26d-2b21ffda605a",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 13
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        3968,
+        3744
+      ],
+      "id": "40168305-d7e4-4a66-b592-818f31fa8a3c",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { jid: \"120363135547556173@g.us\" },\n  { jid: \"125203162075156@lid\" }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4336,
+        3584
+      ],
+      "id": "e5bd1c84-2a25-42f8-8970-61b35feb7c4c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { session_id, message, now } = $items(\"Normalize Input\")[0].json;\n\nconst session = {\n  session_id,\n  created_at: now,\n  updated_at: now,\n  stage: \"start\",\n  lead: { name: null, email: null, whatsapp: null },\n  messages: []\n};\n\nif (message) {\n  session.messages.push({ role: \"user\", text: message, ts: now });\n}\n\nreturn [{ json: { session_id, session } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5040,
+        4064
+      ],
+      "id": "75bd0a46-1d48-4747-b3f8-ad9c57961c46",
+      "name": "Create New Session"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = items[0].json;\n\n// ===== Detecta estrutura =====\nconst body = input.body || {};\nconst messageData = body.message || {};\nconst conversation = body.conversation || {};\n\n// ===== 1. SESSION ID (prioridade múltipla) =====\nconst session_id =\n  conversation.jid ||\n  messageData.jid ||\n  input.sessionId ||\n  input.session_id ||\n  \"unknown_session\";\n\n// ===== 2. TEXTO DA MENSAGEM =====\nlet message =\n  messageData.text ||\n  input.chatInput ||\n  \"\";\n\n// ===== 3. MEDIA URL =====\nlet media_url = null;\n\nif (messageData.media && messageData.media.url) {\n  const host = \"https://myn8n.seommerce.shop\";\n  media_url = host + messageData.media.url;\n}\n\n// ===== 4. DADOS EXTRAS =====\nconst pushName =\n  messageData.pushName ||\n  \"Cliente\";\n\nconst messageType =\n  messageData.type ||\n  (input.chatInput ? \"text\" : \"unknown\");\n\nconst now = new Date().toISOString();\n\n// ===== OUTPUT =====\nreturn [\n  {\n    json: {\n      session_id,\n      message,\n      media_url,\n      messageType,\n      pushName,\n      now\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4448,
+        3968
+      ],
+      "id": "3619ef6a-98af-4a79-b988-7eda8203c5b6",
+      "name": "Normalize Input"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{$json.session_id}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        4624,
+        3968
+      ],
+      "id": "69d5efee-16ba-4194-8c7f-17d3de66a7ab",
+      "name": "Get Session",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a5f8d357-480a-4837-adb9-0d3ad523480b",
+              "leftValue": "={{$json.session_id}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4832,
+        3968
+      ],
+      "id": "b463e797-715e-42d9-873b-d692229e4f67",
+      "name": "Session exists?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================\n// INPUT\n// ================================\nconst norm = $items(\"Normalize Input\")?.[0]?.json ?? {};\nconst row = items[0].json;\n\nconst now = norm.now || new Date().toISOString();\n\n// ================================\n// HELPERS\n// ================================\nfunction safeJsonParse(value, fallback) {\n  if (typeof value !== \"string\") return value ?? fallback;\n  try {\n    return JSON.parse(value);\n  } catch {\n    return fallback;\n  }\n}\n\nfunction isFilled(v) {\n  return v !== null && v !== undefined && String(v).trim() !== \"\";\n}\n\n// ================================\n// LEAD\n// ================================\nlet lead = safeJsonParse(row.lead, {});\nif (typeof lead !== \"object\" || lead === null) lead = {};\n\n// ================================\n// BUSINESS\n// ================================\nlet business = safeJsonParse(row.business, {});\nif (typeof business !== \"object\" || business === null) business = {};\n\n// ================================\n// CONTEXT\n// ================================\nlet context = safeJsonParse(row.context, {});\nif (typeof context !== \"object\" || context === null) context = {};\n\n// ================================\n// MESSAGES (ROBUSTO)\n// ================================\nlet messages = [];\n\n// Caso 1: array já válido\nif (Array.isArray(row.messages)) {\n  messages = row.messages;\n}\n\n// Caso 2: JSON serializado\nelse if (\n  typeof row.messages === \"string\" &&\n  row.messages.trim().startsWith(\"[\")\n) {\n  messages = safeJsonParse(row.messages, []);\n}\n\n// Caso 3: texto puro (mensagem antiga)\nelse if (typeof row.messages === \"string\" && row.messages.trim() !== \"\") {\n  messages = [\n    {\n      role: \"assistant\",\n      text: row.messages,\n      ts: row.updatedAt || row.updated_at || now\n    }\n  ];\n}\n\n// ================================\n// ANEXA NOVA MENSAGEM DO USUÁRIO\n// ================================\nif (norm.message && typeof norm.message === \"string\") {\n  messages.push({\n    role: \"user\",\n    text: norm.message,\n    ts: now\n  });\n}\n\n// ================================\n// LAST ACTION\n// ================================\nconst last_action = norm.last_action || row.last_action || null;\n\n// ================================\n// STAGE DETECTION (REGRA DE NEGÓCIO)\n// ================================\nlet nextStage = row.stage || \"start\";\n\n// Se TODAS as infos do collect_context estiverem preenchidas → qualify\nif (\n  isFilled(lead?.name) &&\n  isFilled(business?.business_type) &&\n  isFilled(context?.main_pain) &&\n  isFilled(context?.desired_solution) &&\n  isFilled(context?.current_process) &&\n  isFilled(context?.urgency) &&\n  isFilled(context?.budget_hint)\n) {\n  nextStage = \"qualify\";\n}\n\n// ================================\n// SESSION FINAL\n// ================================\nconst session = {\n  session_id: row.session_id,\n  created_at: row.created_at, // nunca muda\n  updated_at: now,\n  stage: nextStage,\n  last_action,\n  lead,\n  business,\n  context,\n  messages\n};\n\n// ================================\n// OUTPUT\n// ================================\nreturn [\n  {\n    json: {\n      session_id: row.session_id,\n      session\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5040,
+        3872
+      ],
+      "id": "f10b363a-e6aa-42a3-ab62-0f869edfff36",
+      "name": "Append Message"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session_id }}",
+            "created_at": "={{ $json.session.created_at }}",
+            "updated_at": "={{ $json.session.updated_at }}",
+            "stage": "={{ $json.session.stage }}",
+            "messages": "={{ JSON.stringify($json.session.messages) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        5248,
+        3968
+      ],
+      "id": "8712ef8e-dc7b-424b-9456-2bdf79975094",
+      "name": "Upsert session"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================\n// ORIGEM PRINCIPAL: Data Tables\n// ================================\nconst row = items[0].json;\n\n// ================================\n// ORIGEM DA ÚLTIMA MENSAGEM: Webhook\n// ================================\nconst webhook = $('webhook').first().json;\n\n// ---------- helper: parse seguro ----------\nfunction safeParse(value, fallback) {\n  if (typeof value === \"string\") {\n    try {\n      return JSON.parse(value);\n    } catch (e) {\n      return fallback;\n    }\n  }\n  return value ?? fallback;\n}\n\n// ---------- Parse dos campos principais ----------\nconst messages = Array.isArray(safeParse(row.messages, []))\n  ? safeParse(row.messages, [])\n  : [];\n\nconst stage = row.stage ?? null;\n\n// ================================\n// ÚLTIMA MENSAGEM DO USUÁRIO\n// ================================\nlet last_user_message = null;\n\nif (webhook?.chatInput) {\n  last_user_message = webhook.chatInput;\n} else if (webhook?.body?.message?.text) {\n  last_user_message = webhook.body.message.text;\n}\n\n// Fallback: pega do histórico salvo na sessão, se necessário\nif (!last_user_message) {\n  const userMessages = messages.filter(m => m.role === \"user\");\n  last_user_message =\n    userMessages.length > 0\n      ? userMessages[userMessages.length - 1].text\n      : null;\n}\n\n// ---------- Última mensagem do assistente ----------\nlet last_assistant_message = null;\nfor (let i = messages.length - 1; i >= 0; i--) {\n  if (messages[i].role === \"assistant\") {\n    last_assistant_message = messages[i].text;\n    break;\n  }\n}\n\n// ---------- Sessão ----------\nconst session = {\n  session_id: row.session_id,\n  created_at: row.created_at,\n  updated_at: row.updated_at,\n  stage,\n  peca: row.peca ?? null,\n  servico: row.servico ?? null,\n  preferencia_data: row.preferencia_data ?? null,\n  preferencia_periodo: row.preferencia_periodo ?? null,\n  horario: row.horario ?? null,\n  messages\n};\n\n// ---------- OUTPUT FINAL ----------\nreturn [\n  {\n    json: {\n      session,\n      last_user_message,\n      last_assistant_message\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        4304
+      ],
+      "id": "f371a424-17a5-4e21-b5dc-38fac64d7425",
+      "name": "Load Session"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a38a3f9b-984f-4a94-a3e8-99466bfabe3e",
+                    "leftValue": "={{ $json.last_user_message }}",
+                    "rightValue": "[audio]",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2d2e4206-265f-4846-a087-13bc937971e9",
+                    "leftValue": "={{ $json.last_user_message }}",
+                    "rightValue": "[image]",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Imagem"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "57c37c43-84c1-4771-be9a-3b59a600f09c",
+                    "leftValue": "={{ $json.last_user_message }}",
+                    "rightValue": "[image]",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        4496,
+        4288
+      ],
+      "id": "ee919c04-aeee-45dd-99d8-57daff912cee",
+      "name": "Verifica tipo de mensagem"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "oq tem nessa imagem?",
+        "imageUrls": "=https://whats.dominuslabs.online{{ $('webhook').item.json.body.message.media.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        4816,
+        4464
+      ],
+      "id": "9c096302-62ee-40f3-901a-6c92f8a73f69",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NH99nNTxlO8mv7am",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "oq diz esse audio?\napenas transcreva oq diz no audio, não diga \"o audio diz\" nem traduza, apenas coloque o conteudo do audio\na voz é de homem ou mulher?",
+        "audioUrls": "=https://whats.dominuslabs.online{{ $('webhook').item.json.body.message.media.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        4816,
+        4288
+      ],
+      "id": "35dd05bd-f733-4b7e-baa2-0e32b8914cb0",
+      "name": "Analyze audio",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NH99nNTxlO8mv7am",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ff167f4-b5cf-4715-b382-cda74bd790e8",
+              "name": "Imagem",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "8a10a348-d9cb-4f1a-8159-49021adcd8ed",
+              "name": "=session.session_id",
+              "value": "={{ $json.session.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "4d3633a5-7759-42bf-8a1f-a38af787dbe7",
+              "name": "session.stage",
+              "value": "={{ $json.session.stage }}",
+              "type": "string"
+            },
+            {
+              "id": "1ffdd985-84c1-459e-9406-9a14fbbb3842",
+              "name": "session.business",
+              "value": "={{ $json.session.business }}",
+              "type": "string"
+            },
+            {
+              "id": "3c6f3f14-723f-4a89-9c76-0b8fd929b9d2",
+              "name": "session.context",
+              "value": "={{ $json.session.context }}",
+              "type": "string"
+            },
+            {
+              "id": "319c1e9a-4076-4ab4-bc2b-2ba58df5b394",
+              "name": "session.messages",
+              "value": "={{ $json.session.messages }}",
+              "type": "string"
+            },
+            {
+              "id": "22f565b2-6076-4b65-ac0a-65ec0ef882e1",
+              "name": "last_user_message",
+              "value": "={{ $json.last_user_message }}",
+              "type": "string"
+            },
+            {
+              "id": "f0a8c844-35ea-402a-904e-8972b0496b55",
+              "name": "last_assistant_message",
+              "value": "={{ $json.last_assistant_message }}",
+              "type": "string"
+            },
+            {
+              "id": "230def2e-b6b5-4ee1-b5bc-5d3a490517b3",
+              "name": "last_action",
+              "value": "={{ $('Upsert session').item.json.last_action }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5152,
+        4464
+      ],
+      "id": "8ac574a0-8faf-4499-a3ff-e8bf7491faa3",
+      "name": "Junta tudo1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c0ba34e3-9cd8-43ed-bcd1-c8b63c07b708",
+              "name": "Audio",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5024,
+        4288
+      ],
+      "id": "0400c67e-7163-41b6-b387-24d4f7e98448",
+      "name": "extrai audio"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50ecc958-13b4-4096-9326-9316d43903a8",
+              "name": "session.session_id",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d53b5c43-db8c-4d2b-beee-58ef22a18fd9",
+              "name": "session.stage",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.stage }}",
+              "type": "string"
+            },
+            {
+              "id": "3159b13e-c4b2-4cd0-82fa-cd508b25edd0",
+              "name": "session.lead",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.lead }}",
+              "type": "object"
+            },
+            {
+              "id": "ffbc19be-29dd-4a74-aea4-5d5221595bf3",
+              "name": "session.business",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.business }}",
+              "type": "object"
+            },
+            {
+              "id": "88e089b1-5aef-4606-aa35-21a43d022fca",
+              "name": "session.context",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.context }}",
+              "type": "object"
+            },
+            {
+              "id": "1870562a-9b7b-4175-8f9c-f153e8ebe400",
+              "name": "session.messages",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.session.messages }}",
+              "type": "array"
+            },
+            {
+              "id": "f8cebba4-9367-41a1-89d4-330fc81616f3",
+              "name": "last_user_message",
+              "value": "={{ $json.Audio }}",
+              "type": "string"
+            },
+            {
+              "id": "342ac2c6-26ae-441a-831b-50087caedcd8",
+              "name": "last_assistant_message",
+              "value": "={{ $('Verifica tipo de mensagem').item.json.last_assistant_message }}",
+              "type": "string"
+            },
+            {
+              "id": "dff95245-c006-459e-b8e5-5ca663c92618",
+              "name": "last_action",
+              "value": "={{ $('Upsert session').item.json.last_action }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5232,
+        4288
+      ],
+      "id": "7db2b084-93d9-4fcc-be38-7fbea588e251",
+      "name": "Junta tudo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b1cfbf92-5a65-4603-bd0c-2b95ea684a33",
+              "leftValue": "={{ $json.last_user_message }}",
+              "rightValue": "[audio]",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4528,
+        4624
+      ],
+      "id": "33a90b1b-9c14-47c4-83d2-6adef9444ea7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f812c7e5-d5b7-49b9-9e65-d5bbf31ca12b",
+              "name": "session",
+              "value": "={{ $json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "e12efb81-928e-4704-857b-5fc01b0c0bf2",
+              "name": "last_user_message",
+              "value": "={{ $json.last_user_message }}",
+              "type": "string"
+            },
+            {
+              "id": "54edb74f-6bca-46db-8207-637f7a575f44",
+              "name": "last_assistant_message",
+              "value": "={{ $json.last_assistant_message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5104,
+        4608
+      ],
+      "id": "aa13471b-00a2-41d0-8153-728a4329128b",
+      "name": "Junta tudo2"
+    },
+    {
+      "parameters": {
+        "content": "estou tentando descobrir como fazer o fluxo inteligente que pareça com um formulario, pra isso tenho que antecipar todas as possiveis respostas do usuario, pra poder antecipar precisamos de uma lista de peças pra consertar e uma lista de consertos que podem ser feitos em cada peça, coloquei um switch para a etapa do lead, um switch para o tipo de peça, e preciso agora adicionar um switch para cada serviço oferecido para cada peça, assim podemos ir fazendo seguimento e saber qual orçamento oferecer para o cliente, ou seja, um swhitch para cada peça contendo todos os tipos de conserto, possivelmente vou precisar adicionar ou modificar mais colunas na data tables",
+        "height": 224,
+        "width": 416,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        8928,
+        5184
+      ],
+      "typeVersion": 1,
+      "id": "2b72cbea-0e0b-4ca1-8ee6-803b57c548db",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "amanhã pra começar a fazer a agenda e finalizar o atendimento do agente (redirecionamento para a costureira ou agendamento de visita)",
+        "height": 224,
+        "width": 336,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        9360,
+        5184
+      ],
+      "typeVersion": 1,
+      "id": "7244f100-e645-4ee9-bd8a-0cbac73f8681",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "preciso começar a usar codigo como stage da conversa, mudar o code node que monta o codigo com base nas respostas do usuario para que no lugar de pegar do input apenas pegue do banco de dados, preciso salvar o horario de inicio e fim no banco de dados, a preferencia de peridodo, preciso montar a leitura com ia, que alem de fazer o atendimento direcionado com numeros especificos como fazemos agora, ele vai de fato entender a mensagem do usuario e encaixar no passo certo, criar o atendimento online da costureira",
+        "height": 224,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        9712,
+        5184
+      ],
+      "typeVersion": 1,
+      "id": "10c7c0e8-65d7-47f7-8a6c-669349e35c08",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd8b69bf-5fa3-4c7f-920d-b873f65cb3b3",
+              "leftValue": "={{ $json.last_user_message }}",
+              "rightValue": "^\\d+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4208,
+        4304
+      ],
+      "id": "56dd351f-8a3a-41c8-bc5f-1b67c0286480",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega o item do node \"resposta concatenada\"\nconst row = $('resposta concatenada').first().json;\n\n// Pega messages corretos dentro da sessão\nlet messages = row.session?.messages;\nif (!Array.isArray(messages)) {\n  messages = [];\n}\n\n// Próxima stage após envio da welcome\nconst next_stage = \"collect_context\";\n\n// Pergunta inicial\nconst reply = \"Olá! 😊 Ateliê Careliz ✂️🧵\\n\\nQual peça você deseja ajustar?\\n\\nDigite o número correspondente:\\n\\n1️⃣ Calça\\n2️⃣ Camisa\\n3️⃣ Vestido\\n4️⃣ Saia\\n5️⃣ Shorts\\n6️⃣ Jaqueta\\n7️⃣ Outro\\n\\n✍️ Responda apenas com o número.\";\n\n// Adiciona resposta do assistente ao histórico existente\nmessages.push({\n  role: \"assistant\",\n  text: reply,\n  ts: new Date().toISOString()\n});\n\n// Atualiza sessão\nconst session = {\n  ...row.session,\n  messages,\n  stage: next_stage,\n  updated_at: new Date().toISOString()\n};\n\nreturn [\n  {\n    json: {\n      ...row,\n      action: \"reply\",\n      reply,\n      next_stage,\n      session\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6720,
+        3472
+      ],
+      "id": "e0ccb257-03a0-4a79-8071-ca9c8274c114",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $('Load Session').item.json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.session.messages[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6960,
+        3344
+      ],
+      "id": "48b335b6-48b9-4076-81e0-d52ab0d30e8a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1de611fe-0970-4acd-a836-28ae0e79f293",
+              "leftValue": "={{ $json.output.last_action }}",
+              "rightValue": "=welcome",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6416,
+        3472
+      ],
+      "id": "3b947478-7829-4b47-a327-959ccbd20d34",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "={{ $json.next_stage }}",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "last_action": "=start",
+            "next_action": "1"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        6960,
+        3472
+      ],
+      "id": "79c56aaa-d5c5-4dee-9382-004451148d43",
+      "name": "Update row(s)"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.reply }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        6960,
+        3600
+      ],
+      "id": "c930a354-e1a0-4780-9789-174104453994",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.message }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        8304,
+        3744
+      ],
+      "id": "7a2133f2-2b3d-4ba3-8f5d-ce4886c1f213",
+      "name": "Respond to Chat2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "={{ $json.session.stage }}",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "last_action": "={{ $json.session.stage }}",
+            "peca": "={{ $json[\"peça\"] }}",
+            "next_action": "={{ $json.next_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        8304,
+        3872
+      ],
+      "id": "1e112fb5-74a6-48f6-a549-c0d01d4063b1",
+      "name": "Update row(s)1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BcDi9GWssDZ7GBOV",
+          "mode": "list",
+          "cachedResultName": "produtos_e_serviços_careliz",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/BcDi9GWssDZ7GBOV"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "piece_type",
+              "keyValue": "={{ $json[\"peça\"] }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        7856,
+        3744
+      ],
+      "id": "cde0f94e-5667-437a-9cef-cdc759949060",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// pega o primeiro item do node \"calça\"\nconst baseItems = $items(\"calça\");\nconst baseRow = Array.isArray(baseItems) && baseItems.length > 0\n  ? baseItems[0].json\n  : {};\n\n// peça\nconst pieceType = items[0]?.json?.piece_type || baseRow[\"peça\"] || \"peça\";\n\n// formatação bonita\nfunction formatLabel(text) {\n  return String(text || \"\")\n    .replaceAll(\"_\", \" \")\n    .replace(/\\b\\w/g, l => l.toUpperCase());\n}\n\n// emojis\nconst baseEmojis = [\"1️⃣\",\"2️⃣\",\"3️⃣\",\"4️⃣\",\"5️⃣\",\"6️⃣\",\"7️⃣\",\"8️⃣\",\"9️⃣\",\"🔟\"];\n\nfunction getEmoji(index) {\n  const number = index + 1;\n\n  if (number <= 10) {\n    return baseEmojis[index];\n  }\n\n  return String(number)\n    .split(\"\")\n    .map(d => baseEmojis[Number(d) - 1] || d)\n    .join(\"\");\n}\n\n// remove duplicados por service_type\nconst uniqueMap = new Map();\n\nfor (const item of items) {\n  const row = item.json;\n  const serviceKey = String(row.service_type || \"\").trim().toLowerCase();\n\n  if (!serviceKey) continue;\n\n  // mantém apenas a primeira ocorrência de cada serviço\n  if (!uniqueMap.has(serviceKey)) {\n    uniqueMap.set(serviceKey, row);\n  }\n}\n\n// transforma em array e ordena\nconst services = Array.from(uniqueMap.values()).sort(\n  (a, b) => Number(a.id_servico) - Number(b.id_servico)\n);\n\n// lista dos serviços\nconst serviceList = services\n  .map((s, index) => `${getEmoji(index)} ${formatLabel(s.service_type)}`)\n  .join(\"\\n\\n\");\n\n// mensagem final\nconst reply = `Qual ajuste você quer fazer na sua ${pieceType}?\n\n${serviceList}\n\n━━━━━━━━━━━━━━━\n📩 Como responder:\nDigite apenas o número da opção desejada.\n━━━━━━━━━━━━━━━`;\n\nreturn [\n  {\n    json: {\n      ...baseRow,\n      reply\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8064,
+        3744
+      ],
+      "id": "2f90a1ed-9b71-4d2e-af61-ee64708bb42e",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f11f8114-f90d-4553-86a5-f2380bd0d1a4",
+              "leftValue": "={{ $json.opcao_servico }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        7600,
+        3840
+      ],
+      "id": "4f526212-4ac4-4597-992f-8c0e8938aa8b",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = items[0].json;\n\n// mensagens da sessão\nconst messages = Array.isArray(row.session?.messages) ? row.session.messages : [];\n\n// só mensagens do usuário\nconst userMessages = messages\n  .filter(m => m.role === \"user\" && m.text != null)\n  .map(m => String(m.text).trim())\n  .filter(Boolean);\n\n// função para extrair número da mensagem\nfunction extractNumber(text) {\n  const match = String(text).match(/\\d+/);\n  return match ? Number(match[0]) : null;\n}\n\n// 2ª mensagem do usuário = escolha da peça\nconst secondUserMessage = userMessages[1] ?? null;\nconst id_produto = secondUserMessage ? extractNumber(secondUserMessage) : null;\n\n// 3ª mensagem do usuário = escolha do serviço\nconst thirdUserMessage = userMessages[2] ?? null;\nconst serviceChoice = thirdUserMessage ? extractNumber(thirdUserMessage) : null;\n\n// opcao_servico e id_servico só existem quando já houver 2ª e 3ª mensagem do usuário\nlet opcao_servico = null;\nlet id_servico = null;\n\nif (id_produto !== null && serviceChoice !== null) {\n  opcao_servico = Number(`${id_produto}${serviceChoice}`);\n  id_servico = opcao_servico;\n}\n\nreturn [\n  {\n    json: {\n      ...row,\n      id_produto,\n      opcao_servico,\n      id_servico\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5520,
+        4320
+      ],
+      "id": "a6e52074-937d-4afe-8d29-3f9e1962c921",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "=agendamento",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "last_action": "={{ $json.session.stage }}",
+            "peca": "={{ $json.piece_type }}",
+            "servico": "={{ $json.service_type }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        7712,
+        4080
+      ],
+      "id": "eb39ea8c-40e4-4bb1-aa58-7595ab15b872",
+      "name": "Update row(s)2"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.message }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        7712,
+        3952
+      ],
+      "id": "12a3e864-b7ed-4f21-ab93-a8239e110940",
+      "name": "Respond to Chat3",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34263e8b-b5a5-4e1c-9394-92e15f2eb99a",
+              "name": "message",
+              "value": "=Perfeito! O valor estimado para {{ $json.service_type }} é de R$ {{$json.preco}}.  Agora você pode escolher como deseja continuar:  \n\n1️⃣ Agendar um horário \n\n2️⃣ Falar diretamente com a profissional pelo WhatsApp  \n\n✍️ Responda apenas com o número da opção desejada.`",
+              "type": "string"
+            },
+            {
+              "id": "94a70942-fdcd-44a5-b7ae-12509d06fa46",
+              "name": "piece_type",
+              "value": "={{ $json.piece_type }}",
+              "type": "string"
+            },
+            {
+              "id": "64228ab8-799c-401e-8e1b-f4905587f1ff",
+              "name": "service_type",
+              "value": "={{ $json.service_type }}",
+              "type": "string"
+            },
+            {
+              "id": "61d8eb66-f400-49e5-ae6a-62b4d45282d0",
+              "name": "preco",
+              "value": "={{ $json.preco }}",
+              "type": "number"
+            },
+            {
+              "id": "5c822bc4-44ac-4e08-b834-1426e0556bd9",
+              "name": "id_produto",
+              "value": "={{ $json.id_produto }}",
+              "type": "number"
+            },
+            {
+              "id": "43d870da-a5d3-468e-90f4-ae4f6b44d803",
+              "name": "id_servico",
+              "value": "={{ $json.id_servico }}",
+              "type": "string"
+            },
+            {
+              "id": "86cc0f70-03f4-4279-b338-86b6d3562f2b",
+              "name": "session",
+              "value": "={{ $('resposta concatenada').item.json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "e2f2e217-5a34-4715-9f6d-2a2737592d69",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7296,
+        4000
+      ],
+      "id": "e5911b95-9714-4df5-9745-6d92f5549799",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6e1bde89-0952-4164-84df-ee312ee440b4",
+              "name": "reply",
+              "value": "=Perfeito! Vamos agendar sua visita à loja 😊\n\nQual dia você prefere?\n\n1️⃣ Hoje\n\n2️⃣ Amanhã\n\n3️⃣ Escolher outra data\n\n✍️ Responda apenas com o número da opção desejada.",
+              "type": "string"
+            },
+            {
+              "id": "289287cb-ee8e-44ae-baec-c4c70d1ed83e",
+              "name": "session",
+              "value": "={{ $('resposta concatenada').item.json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "64167126-7dd7-4286-a45b-ded21bb5ed6b",
+              "name": "respostas_concatenadas",
+              "value": "={{ $('resposta concatenada').item.json.respostas_concatenadas }}",
+              "type": "string"
+            },
+            {
+              "id": "8f1dc4a7-957e-4184-aa24-2eba066de802",
+              "name": "nivel",
+              "value": "={{ $json.nivel }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7296,
+        4160
+      ],
+      "id": "7f49abe6-1229-430e-8729-35aef7660592",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.reply }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        7504,
+        4096
+      ],
+      "id": "8048d62d-a34a-4384-8f78-241e5272a781",
+      "name": "Respond to Chat4",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "=agendamento",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "next_action": "={{ $json.nivel }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        7504,
+        4224
+      ],
+      "id": "ac64b08b-9f1c-49c1-b568-76e583e2c660",
+      "name": "Update row(s)3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a53beb37-0536-46ff-8445-997e16967c77",
+              "name": "session",
+              "value": "={{ $('resposta concatenada').item.json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "9bab4e72-8455-49a8-b70b-fa76459cd322",
+              "name": "peça",
+              "value": "={{ $json.piece_type }}",
+              "type": "string"
+            },
+            {
+              "id": "6d8660b6-1da5-471b-8947-e0fc493c5057",
+              "name": "next_action",
+              "value": "2",
+              "type": "string"
+            },
+            {
+              "id": "cd6cc7d1-aa1c-4761-b6bd-96d64de8100d",
+              "name": "chatInput",
+              "value": "={{ $json.codigo }}",
+              "type": "string"
+            },
+            {
+              "id": "9cd77117-4c49-4b62-a077-fa6e3a6fdc8a",
+              "name": "opcao_servico",
+              "value": "={{ $('resposta concatenada').item.json.opcao_servico }}",
+              "type": "string"
+            },
+            {
+              "id": "193c4760-bb2c-42b1-a95d-7d589c7192d5",
+              "name": "id_servico",
+              "value": "={{ $json.id_servico }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7296,
+        3840
+      ],
+      "id": "408177da-68bc-45af-b9b1-167d85def469",
+      "name": "calça"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BcDi9GWssDZ7GBOV",
+          "mode": "list",
+          "cachedResultName": "produtos_e_serviços_careliz",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/BcDi9GWssDZ7GBOV"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "codigo",
+              "keyValue": "={{ $json.respostas_concatenadas }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        6128,
+        4336
+      ],
+      "id": "c19489b9-3d80-4784-8da9-a5d6316fe4fb",
+      "name": "Get row(s)4",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "64a637b8-8e47-4ed0-b0ae-8f29ab44a19c",
+              "leftValue": "={{ $json.codigo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6336,
+        4336
+      ],
+      "id": "9c833dc7-ecb2-4633-812f-7680577e18bd",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ca4cfebb-831a-48e9-8e3f-30c59723af23",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fc30ff2c-5786-4fad-983b-2a2345562eb3",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a038d3c7-6c70-4c9b-b821-655349c05299",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "67264225-1538-4ff5-bc71-bded5cb3295f",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 4,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9b1dc397-3241-4035-95ff-2e5769275bb6",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "974b2d28-9b95-4ecc-bccb-8b4b4b8f538d",
+                    "leftValue": "={{ $json.nivel }}",
+                    "rightValue": 6,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        6560,
+        4384
+      ],
+      "id": "c72ce4fe-90cb-4b7d-ac23-74084a9e7f94",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apptJsrbTwZAZKW7v",
+          "mode": "list",
+          "cachedResultName": "Agenda Careliz Ateliê",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl62hMwRDY57QR98",
+          "mode": "list",
+          "cachedResultName": "Agendamentos",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v/tbl62hMwRDY57QR98"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        6656,
+        5072
+      ],
+      "id": "f4f78990-66e9-4d37-987f-3608a29712d9",
+      "name": "Search records",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wcq04FQmvJqztBBT",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// ================================\n// CONFIG\n// ================================\nconst SLOT_MINUTES = 30;\n\nconst PERIODOS = [\n  { start: \"07:00\", end: \"11:00\" },\n  { start: \"13:00\", end: \"18:00\" },\n];\n\n// ================================\n// HELPERS\n// ================================\nfunction timeToMinutes(timeStr) {\n  const [h, m] = String(timeStr).split(\":\").map(Number);\n  return (h * 60) + m;\n}\n\nfunction minutesToTime(minutes) {\n  const h = Math.floor(minutes / 60);\n  const m = minutes % 60;\n  return String(h).padStart(2, \"0\") + \":\" + String(m).padStart(2, \"0\");\n}\n\nfunction extractTime(value) {\n  if (!value) return null;\n\n  // Se já vier como \"07:30\"\n  if (/^\\d{2}:\\d{2}$/.test(String(value))) {\n    return String(value);\n  }\n\n  // Se vier ISO tipo \"2026-03-24T07:30:00.000Z\"\n  const str = String(value);\n  const match = str.match(/T(\\d{2}:\\d{2})/);\n  if (match) return match[1];\n\n  return null;\n}\n\n// ================================\n// HORÁRIOS OCUPADOS\n// ================================\n// Ajuste aqui o nome do campo que vem do Airtable\n// Ex.: data_hora, horario, slot, start_time...\nconst occupiedSlots = items\n  .map(item => {\n    const json = item.json || {};\n    return (\n      extractTime(json.horario) ||\n      extractTime(json.data_hora) ||\n      extractTime(json.slot) ||\n      extractTime(json.start_time)\n    );\n  })\n  .filter(Boolean);\n\n// Para busca rápida\nconst occupiedSet = new Set(occupiedSlots);\n\n// ================================\n// GERA TODOS OS SLOTS POSSÍVEIS\n// ================================\nconst availableSlots = [];\n\nfor (const periodo of PERIODOS) {\n  let current = timeToMinutes(periodo.start);\n  const end = timeToMinutes(periodo.end);\n\n  while (current < end) {\n    const slot = minutesToTime(current);\n\n    if (!occupiedSet.has(slot)) {\n      availableSlots.push({\n        horario: slot,\n        periodo: `${periodo.start}-${periodo.end}`,\n      });\n    }\n\n    current += SLOT_MINUTES;\n  }\n}\n\n// ================================\n// OUTPUT\n// ================================\nreturn availableSlots.map(slot => ({\n  json: slot,\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6864,
+        5072
+      ],
+      "id": "1a5ae8dd-0d1c-4c3a-b708-fa3d8b8ab1b6",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// emojis de 1 a 10\nconst baseEmojis = [\"1️⃣\",\"2️⃣\",\"3️⃣\",\"4️⃣\",\"5️⃣\",\"6️⃣\",\"7️⃣\",\"8️⃣\",\"9️⃣\",\"🔟\"];\n\nfunction getEmoji(index) {\n  const number = index + 1;\n\n  if (number <= 10) {\n    return baseEmojis[index];\n  }\n\n  return `${number}️⃣`;\n}\n\n// pega horários válidos\nconst horarios = items\n  .map(item => item.json?.horario)\n  .filter(Boolean);\n\n// se não tiver horários\nif (horarios.length === 0) {\n  return [\n    {\n      json: {\n        message: \"No momento, não há horários disponíveis para hoje.\\n\\nSe preferir, posso verificar outro dia ou encaminhar você para atendimento direto no WhatsApp.\",\n        options_map: {}\n      }\n    }\n  ];\n}\n\n// monta linhas numeradas\nconst linhas = horarios.map((horario, index) => {\n  return `${getEmoji(index)} ${horario}`;\n});\n\n// cria mapa de opção -> horário\nconst optionsMap = {};\nhorarios.forEach((horario, index) => {\n  optionsMap[String(index + 1)] = horario;\n});\n\n// mensagem final\nconst message =\n  `Perfeito! Estes são os horários disponíveis para hoje:\\n\\n` +\n  `${linhas.join(\"\\n\")}\\n\\n` +\n  `✍️ Responda apenas com o número da opção desejada.`;\n\nreturn [\n  {\n    json: {\n      message,\n      options_map: optionsMap,\n      horarios_disponiveis: horarios\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7280,
+        5072
+      ],
+      "id": "2bada330-e136-4657-884d-495968f2e1af",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.message }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        7536,
+        5088
+      ],
+      "id": "f22bc96e-f7ca-4463-977b-2dfad182dd8f",
+      "name": "Respond to Chat5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6205d11f-7153-4332-90ba-91e5d9258e6c",
+              "name": "horario",
+              "value": "={{ $json.horario }}",
+              "type": "string"
+            },
+            {
+              "id": "5c2014c7-7d84-4ada-8e37-762a99c51fe9",
+              "name": "periodo",
+              "value": "={{ $json.periodo }}",
+              "type": "string"
+            },
+            {
+              "id": "f6ca6c12-da47-4fdf-9034-82ab77adcad0",
+              "name": "=session",
+              "value": "={{ $('resposta concatenada').first().json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "c0932b46-cd5e-4cfc-98ca-58d865e19659",
+              "name": "nivel",
+              "value": "={{ $('Get row(s)4').first().json.nivel }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7072,
+        5072
+      ],
+      "id": "7cef0bf9-54e2-46a2-aa21-14bda1ea7987",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "=agendamento",
+            "lead": "={{ JSON.stringify($json.session.lead|| {}) }}",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "next_action": "={{ $json.nivel }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead",
+              "displayName": "lead",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        7280,
+        5216
+      ],
+      "id": "2b92a42d-1208-46d6-9c0d-0b54c8d7798e",
+      "name": "Update row(s)4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $json.session.session_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session.session_id }}",
+            "stage": "=agendamento",
+            "messages": "={{ JSON.stringify($json.session.messages|| {}) }}",
+            "next_action": "={{ $json.nivel }}",
+            "preferencia_data": "={{ $json.data_desejada }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "messages",
+              "displayName": "messages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_action",
+              "displayName": "last_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "peca",
+              "displayName": "peca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "next_action",
+              "displayName": "next_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "preferencia_data",
+              "displayName": "preferencia_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cliente",
+              "displayName": "cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "preferencia_periodo",
+              "displayName": "preferencia_periodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "horario",
+              "displayName": "horario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        8048,
+        4704
+      ],
+      "id": "96a542e7-bff1-40c6-93d2-7ff855385f32",
+      "name": "Update row(s)5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cf98c108-349a-4556-9c68-2f8fb077e8bb",
+              "name": "codigo",
+              "value": "={{ $json.codigo }}",
+              "type": "number"
+            },
+            {
+              "id": "fad09922-0932-4bd5-924c-3acbd5374280",
+              "name": "nivel",
+              "value": "={{ $json.nivel }}",
+              "type": "number"
+            },
+            {
+              "id": "e77e5bc8-4bff-4b9e-8c74-99dfc06dd512",
+              "name": "id_produto",
+              "value": "={{ $json.id_produto }}",
+              "type": "number"
+            },
+            {
+              "id": "3d43bd18-21d5-46bd-87d3-3572292ece44",
+              "name": "piece_type",
+              "value": "={{ $json.piece_type }}",
+              "type": "string"
+            },
+            {
+              "id": "d52eb4f2-844d-444e-877f-198c7bdbdc58",
+              "name": "id_servico",
+              "value": "={{ $json.id_servico }}",
+              "type": "number"
+            },
+            {
+              "id": "98455faa-5261-4573-9d22-0f94bdb4ac5d",
+              "name": "service_type",
+              "value": "={{ $json.service_type }}",
+              "type": "string"
+            },
+            {
+              "id": "db03a844-7d69-48d5-96bb-98e22cb37e04",
+              "name": "preco",
+              "value": "={{ $json.preco }}",
+              "type": "number"
+            },
+            {
+              "id": "776e5a1a-e34b-405b-866c-6032d58d8300",
+              "name": "acao",
+              "value": "={{ $json.acao }}",
+              "type": "string"
+            },
+            {
+              "id": "25f1a6f1-33fa-4b99-9f6f-425bb64fd987",
+              "name": "preferencial_data",
+              "value": "={{ $json.preferencial_data }}",
+              "type": "string"
+            },
+            {
+              "id": "613a98f7-75d4-4de3-8d04-bf1c6fad9f08",
+              "name": "significado",
+              "value": "={{ $json.significado }}",
+              "type": "string"
+            },
+            {
+              "id": "2bd34003-bb82-462b-8e1b-58d76ca860ac",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "b9ff4e09-8c74-4ba8-8aa9-0339375c6bcc",
+              "name": "session",
+              "value": "={{ $('resposta concatenada').item.json.session }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6992,
+        4544
+      ],
+      "id": "8a5c1fe0-9ea2-4a84-99f0-09c40fc12300",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apptJsrbTwZAZKW7v",
+          "mode": "list",
+          "cachedResultName": "Agenda Careliz Ateliê",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl62hMwRDY57QR98",
+          "mode": "list",
+          "cachedResultName": "Agendamentos",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v/tbl62hMwRDY57QR98"
+        },
+        "filterByFormula": "={{ `IS_SAME({Data e Hora de Início}, '${$json.data_desejada}', 'day')` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        7392,
+        4544
+      ],
+      "id": "bd4dd76a-9afc-4289-bc81-8d39f0c75992",
+      "name": "Search records1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wcq04FQmvJqztBBT",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\n// =====================================================\n// CAMPOS DE ENTRADA\n// =====================================================\nconst opcao = String(item.preferencial_data || \"\").trim();\nconst session = item.session || null;\n\n// Se no futuro vier uma data manual digitada pelo usuário,\n// você pode alimentar esse campo antes deste node.\nconst dataManual = String(item.data_informada || \"\").trim();\n\n// =====================================================\n// HELPERS\n// =====================================================\nfunction formatDateLocal(date) {\n  const year = date.getFullYear();\n  const month = String(date.getMonth() + 1).padStart(2, \"0\");\n  const day = String(date.getDate()).padStart(2, \"0\");\n  return `${year}-${month}-${day}`;\n}\n\nfunction addDays(date, days) {\n  const d = new Date(date);\n  d.setDate(d.getDate() + days);\n  return d;\n}\n\nfunction parseBRDate(br) {\n  const match = br.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/);\n  if (!match) return null;\n\n  const [, dd, mm, yyyy] = match;\n  return `${yyyy}-${mm}-${dd}`;\n}\n\n// =====================================================\n// REGRA DE DATA\n// =====================================================\nconst now = new Date();\n\nlet preferencia_data = null;\nlet data_desejada = null;\nlet precisa_pedir_data = false;\n\nif (opcao === \"HOJE\" || opcao === \"1\") {\n  preferencia_data = \"HOJE\";\n  data_desejada = formatDateLocal(now);\n} else if (opcao === \"AMANHA\" || opcao === \"2\") {\n  preferencia_data = \"AMANHA\";\n  data_desejada = formatDateLocal(addDays(now, 1));\n} else if (opcao === \"OUTRA_DATA\" || opcao === \"3\") {\n  preferencia_data = \"OUTRA_DATA\";\n\n  if (dataManual) {\n    data_desejada = parseBRDate(dataManual);\n  } else {\n    precisa_pedir_data = true;\n  }\n}\n\n// =====================================================\n// OUTPUT\n// =====================================================\nreturn [\n  {\n    json: {\n      ...item,\n      session,\n      preferencia_data,\n      data_desejada,\n      precisa_pedir_data\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7200,
+        4544
+      ],
+      "id": "75031124-34fc-4238-8cfd-e95fac2bde15",
+      "name": "Code in JavaScript10"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// ================================\n// CONFIG\n// ================================\nconst SLOT_MINUTES = 30;\n\nconst PERIODOS = {\n  MANHA: { start: \"07:00\", end: \"11:00\" },\n  TARDE: { start: \"13:00\", end: \"18:00\" },\n};\n\n// ================================\n// HELPERS\n// ================================\nfunction timeToMinutes(timeStr) {\n  const [h, m] = String(timeStr).split(\":\").map(Number);\n  return (h * 60) + m;\n}\n\nfunction minutesToTime(minutes) {\n  const h = Math.floor(minutes / 60);\n  const m = minutes % 60;\n  return String(h).padStart(2, \"0\") + \":\" + String(m).padStart(2, \"0\");\n}\n\nfunction extractTime(value) {\n  if (!value) return null;\n\n  const str = String(value);\n\n  if (/^\\d{2}:\\d{2}$/.test(str)) {\n    return str;\n  }\n\n  const match = str.match(/T(\\d{2}:\\d{2})/);\n  if (match) return match[1];\n\n  return null;\n}\n\nfunction gerarSlotsPeriodo(start, end, slotMinutes = 30) {\n  const slots = [];\n  let current = timeToMinutes(start);\n  const limit = timeToMinutes(end);\n\n  while (current < limit) {\n    slots.push(minutesToTime(current));\n    current += slotMinutes;\n  }\n\n  return slots;\n}\n\nfunction formatarDataHumana(itemBase) {\n  const pref =\n    itemBase.preferencia_data ||\n    itemBase.preferencial_data ||\n    null;\n\n  if (pref === \"HOJE\") return \"hoje\";\n  if (pref === \"AMANHA\") return \"amanhã\";\n\n  const dataDesejada = itemBase.data_desejada || null;\n  if (dataDesejada && /^\\d{4}-\\d{2}-\\d{2}$/.test(dataDesejada)) {\n    const [yyyy, mm, dd] = dataDesejada.split(\"-\");\n    return `${dd}/${mm}/${yyyy}`;\n  }\n\n  return \"a data desejada\";\n}\n\n// ================================\n// ITEM BASE\n// ================================\nconst itemBase = items[0]?.json || {};\n\n// ================================\n// HORÁRIOS OCUPADOS\n// ================================\nconst occupiedSlots = items\n  .map(item => {\n    const json = item.json || {};\n    return (\n      extractTime(json[\"Data e Hora de Início\"]) ||\n      extractTime(json.inicio) ||\n      extractTime(json.horario) ||\n      extractTime(json.data_hora) ||\n      extractTime(json.slot) ||\n      extractTime(json.start_time)\n    );\n  })\n  .filter(Boolean);\n\nconst occupiedSet = new Set(occupiedSlots);\n\n// ================================\n// GERA SLOTS POSSÍVEIS\n// ================================\nconst slotsManha = gerarSlotsPeriodo(PERIODOS.MANHA.start, PERIODOS.MANHA.end, SLOT_MINUTES);\nconst slotsTarde = gerarSlotsPeriodo(PERIODOS.TARDE.start, PERIODOS.TARDE.end, SLOT_MINUTES);\n\n// ================================\n// DISPONÍVEIS\n// ================================\nconst disponiveisManha = slotsManha.filter(slot => !occupiedSet.has(slot));\nconst disponiveisTarde = slotsTarde.filter(slot => !occupiedSet.has(slot));\n\nconst temManha = disponiveisManha.length > 0;\nconst temTarde = disponiveisTarde.length > 0;\n\n// ================================\n// MENSAGEM\n// ================================\nconst dataHumana = formatarDataHumana(itemBase);\n\nlet reply = \"\";\nlet opcoes_periodo = [];\n\nif (temManha && temTarde) {\n  reply =\n    `Perfeito! Confirmei na nossa agenda e temos horários disponíveis para ${dataHumana} 😊\\n\\n` +\n    `Você prefere vir em qual período?\\n\\n` +\n    `1️⃣ Manhã\\n\\n` +\n    `2️⃣ Tarde\\n\\n` +\n    `✍️ Responda apenas com o número da opção desejada.`;\n\n  opcoes_periodo = [\n    { opcao: \"1\", periodo: \"MANHA\" },\n    { opcao: \"2\", periodo: \"TARDE\" }\n  ];\n} else if (temManha && !temTarde) {\n  reply =\n    `Perfeito! Confirmei na nossa agenda e temos horários disponíveis para ${dataHumana} apenas no período da manhã 😊\\n\\n` +\n    `Se desejar continuar com esse período, responda:\\n\\n` +\n    `1️⃣ Manhã\\n\\n` +\n    `Se preferir, você também pode escolher outra data.\\n\\n` +\n    `3️⃣ Outra data\\n\\n` +\n    `✍️ Responda apenas com o número da opção desejada.`;\n\n  opcoes_periodo = [\n    { opcao: \"1\", periodo: \"MANHA\" },\n    { opcao: \"3\", periodo: \"OUTRA_DATA\" }\n  ];\n} else if (!temManha && temTarde) {\n  reply =\n    `Perfeito! Confirmei na nossa agenda e temos horários disponíveis para ${dataHumana} apenas no período da tarde 😊\\n\\n` +\n    `Se desejar continuar com esse período, responda:\\n\\n` +\n    `2️⃣ Tarde\\n\\n` +\n    `Se preferir, você também pode escolher outra data.\\n\\n` +\n    `3️⃣ Outra data\\n\\n` +\n    `✍️ Responda apenas com o número da opção desejada.`;\n\n  opcoes_periodo = [\n    { opcao: \"2\", periodo: \"TARDE\" },\n    { opcao: \"3\", periodo: \"OUTRA_DATA\" }\n  ];\n} else {\n  reply =\n    `Verifiquei nossa agenda e não encontrei horários disponíveis para ${dataHumana} 😕\\n\\n` +\n    `Você pode escolher outra data:\\n\\n` +\n    `3️⃣ Outra data\\n\\n` +\n    `✍️ Responda apenas com o número da opção desejada.`;\n\n  opcoes_periodo = [\n    { opcao: \"3\", periodo: \"OUTRA_DATA\" }\n  ];\n}\n\n// ================================\n// OUTPUT\n// ================================\nreturn [\n  {\n    json: {\n      ...itemBase,\n      horarios_ocupados: occupiedSlots,\n      disponiveis_manha: disponiveisManha,\n      disponiveis_tarde: disponiveisTarde,\n      tem_manha: temManha,\n      tem_tarde: temTarde,\n      opcoes_periodo,\n      reply,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7584,
+        4544
+      ],
+      "id": "fb625b5c-b86c-4d3e-8699-f116e6074721",
+      "name": "Code in JavaScript11"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.reply }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        8048,
+        4544
+      ],
+      "id": "4e18d4f4-7c7d-4e66-a9fd-9e0231e8ce0c",
+      "name": "Respond to Chat8",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8bc02543-b001-447d-9b6d-aff3e3a590d2",
+              "name": "reply",
+              "value": "={{ $json.reply }}",
+              "type": "string"
+            },
+            {
+              "id": "879c15b5-8c5e-4f06-9424-301d2bbdc724",
+              "name": "session",
+              "value": "={{ $('Edit Fields4').item.json.session }}",
+              "type": "object"
+            },
+            {
+              "id": "2517ba87-4e33-47e1-bbca-130cd7d9d3b5",
+              "name": "nivel",
+              "value": "={{ $('Edit Fields4').item.json.nivel }}",
+              "type": "number"
+            },
+            {
+              "id": "7a9ec375-326f-4739-9bc1-fd1122bf77e5",
+              "name": "data_desejada",
+              "value": "={{ $('Code in JavaScript10').item.json.data_desejada }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7792,
+        4544
+      ],
+      "id": "64e57a52-e5ed-4ceb-9632-9e9494a0fd33",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cf98c108-349a-4556-9c68-2f8fb077e8bb",
+              "name": "codigo",
+              "value": "={{ $json.codigo }}",
+              "type": "number"
+            },
+            {
+              "id": "fad09922-0932-4bd5-924c-3acbd5374280",
+              "name": "nivel",
+              "value": "={{ $json.nivel }}",
+              "type": "number"
+            },
+            {
+              "id": "e77e5bc8-4bff-4b9e-8c74-99dfc06dd512",
+              "name": "id_produto",
+              "value": "={{ $json.id_produto }}",
+              "type": "number"
+            },
+            {
+              "id": "3d43bd18-21d5-46bd-87d3-3572292ece44",
+              "name": "piece_type",
+              "value": "={{ $json.piece_type }}",
+              "type": "string"
+            },
+            {
+              "id": "d52eb4f2-844d-444e-877f-198c7bdbdc58",
+              "name": "id_servico",
+              "value": "={{ $json.id_servico }}",
+              "type": "number"
+            },
+            {
+              "id": "98455faa-5261-4573-9d22-0f94bdb4ac5d",
+              "name": "service_type",
+              "value": "={{ $json.service_type }}",
+              "type": "string"
+            },
+            {
+              "id": "db03a844-7d69-48d5-96bb-98e22cb37e04",
+              "name": "preco",
+              "value": "={{ $json.preco }}",
+              "type": "number"
+            },
+            {
+              "id": "776e5a1a-e34b-405b-866c-6032d58d8300",
+              "name": "acao",
+              "value": "={{ $json.acao }}",
+              "type": "string"
+            },
+            {
+              "id": "25f1a6f1-33fa-4b99-9f6f-425bb64fd987",
+              "name": "preferencial_data",
+              "value": "={{ $json.preferencial_data }}",
+              "type": "string"
+            },
+            {
+              "id": "613a98f7-75d4-4de3-8d04-bf1c6fad9f08",
+              "name": "significado",
+              "value": "={{ $json.significado }}",
+              "type": "string"
+            },
+            {
+              "id": "2bd34003-bb82-462b-8e1b-58d76ca860ac",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "b9ff4e09-8c74-4ba8-8aa9-0339375c6bcc",
+              "name": "session",
+              "value": "={{ $('resposta concatenada').item.json.session }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6992,
+        4704
+      ],
+      "id": "2196b411-792d-4173-8f9b-a41266959ded",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apptJsrbTwZAZKW7v",
+          "mode": "list",
+          "cachedResultName": "Agenda Careliz Ateliê",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl62hMwRDY57QR98",
+          "mode": "list",
+          "cachedResultName": "Agendamentos",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v/tbl62hMwRDY57QR98"
+        },
+        "filterByFormula": "={{ `IS_SAME({Data e Hora de Início}, '${$json.data_desejada}', 'day')` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        7392,
+        4704
+      ],
+      "id": "c8970d21-257c-4d10-abe2-715a6eeafd85",
+      "name": "Search records2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wcq04FQmvJqztBBT",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\n// =====================================================\n// CAMPOS DE ENTRADA\n// =====================================================\nconst opcao = String(item.preferencial_data || \"\").trim();\nconst session = item.session || null;\n\n// Se no futuro vier uma data manual digitada pelo usuário,\n// você pode alimentar esse campo antes deste node.\nconst dataManual = String(item.data_informada || \"\").trim();\n\n// =====================================================\n// HELPERS\n// =====================================================\nfunction formatDateLocal(date) {\n  const year = date.getFullYear();\n  const month = String(date.getMonth() + 1).padStart(2, \"0\");\n  const day = String(date.getDate()).padStart(2, \"0\");\n  return `${year}-${month}-${day}`;\n}\n\nfunction addDays(date, days) {\n  const d = new Date(date);\n  d.setDate(d.getDate() + days);\n  return d;\n}\n\nfunction parseBRDate(br) {\n  const match = br.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/);\n  if (!match) return null;\n\n  const [, dd, mm, yyyy] = match;\n  return `${yyyy}-${mm}-${dd}`;\n}\n\n// =====================================================\n// REGRA DE DATA\n// =====================================================\nconst now = new Date();\n\nlet preferencia_data = null;\nlet data_desejada = null;\nlet precisa_pedir_data = false;\n\nif (opcao === \"HOJE\" || opcao === \"1\") {\n  preferencia_data = \"HOJE\";\n  data_desejada = formatDateLocal(now);\n} else if (opcao === \"AMANHA\" || opcao === \"2\") {\n  preferencia_data = \"AMANHA\";\n  data_desejada = formatDateLocal(addDays(now, 1));\n} else if (opcao === \"OUTRA_DATA\" || opcao === \"3\") {\n  preferencia_data = \"OUTRA_DATA\";\n\n  if (dataManual) {\n    data_desejada = parseBRDate(dataManual);\n  } else {\n    precisa_pedir_data = true;\n  }\n}\n\n// =====================================================\n// OUTPUT\n// =====================================================\nreturn [\n  {\n    json: {\n      ...item,\n      session,\n      preferencia_data,\n      data_desejada,\n      precisa_pedir_data\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7200,
+        4704
+      ],
+      "id": "bcbfba04-be33-4633-a38a-e5a734a25a9a",
+      "name": "Code in JavaScript12"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// ================================\n// CONFIG\n// ================================\nconst SLOT_MINUTES = 30;\n\nconst PERIODOS = {\n  MANHA: { start: \"07:00\", end: \"11:00\" },\n  TARDE: { start: \"13:00\", end: \"18:00\" },\n};\n\n// ================================\n// HELPERS\n// ================================\nfunction timeToMinutes(timeStr) {\n  const [h, m] = String(timeStr).split(\":\").map(Number);\n  return (h * 60) + m;\n}\n\nfunction minutesToTime(minutes) {\n  const h = Math.floor(minutes / 60);\n  const m = minutes % 60;\n  return `${String(h).padStart(2, \"0\")}:${String(m).padStart(2, \"0\")}`;\n}\n\nfunction extractTime(value) {\n  if (!value) return null;\n\n  const str = String(value);\n\n  // Ex.: \"07:30\"\n  if (/^\\d{2}:\\d{2}$/.test(str)) {\n    return str;\n  }\n\n  // Ex.: \"2026-03-25T07:30:00.000Z\"\n  const match = str.match(/T(\\d{2}:\\d{2})/);\n  if (match) return match[1];\n\n  return null;\n}\n\nfunction gerarSlotsPeriodo(start, end, slotMinutes = 30) {\n  const slots = [];\n  let current = timeToMinutes(start);\n  const limit = timeToMinutes(end);\n\n  while (current < limit) {\n    slots.push(minutesToTime(current));\n    current += slotMinutes;\n  }\n\n  return slots;\n}\n\nfunction detectarPeriodoPorSignificado(significado) {\n  const s = String(significado || \"\").toLowerCase();\n\n  if (s.includes(\"manha\")) return \"MANHA\";\n  if (s.includes(\"tarde\")) return \"TARDE\";\n\n  return null;\n}\n\nfunction formatarDataHumana(itemBase) {\n  const pref =\n    itemBase.preferencia_data ||\n    itemBase.preferencial_data ||\n    null;\n\n  if (pref === \"HOJE\") return \"hoje\";\n  if (pref === \"AMANHA\") return \"amanhã\";\n\n  const dataDesejada = itemBase.data_desejada || null;\n  if (dataDesejada && /^\\d{4}-\\d{2}-\\d{2}$/.test(dataDesejada)) {\n    const [yyyy, mm, dd] = dataDesejada.split(\"-\");\n    return `${dd}/${mm}/${yyyy}`;\n  }\n\n  return \"a data desejada\";\n}\n\n// ================================\n// ITEM BASE\n// ================================\n// Procuramos o item que tem \"significado\"\nconst itemBase = items.find(i => i.json?.significado)?.json || items[0]?.json || {};\n\n// ================================\n// IDENTIFICAR PERÍODO PELO SIGNIFICADO\n// ================================\nconst periodoIdentificado = detectarPeriodoPorSignificado(itemBase.significado);\n\nif (!periodoIdentificado) {\n  return [\n    {\n      json: {\n        ...itemBase,\n        erro: true,\n        reply:\n          \"Não consegui identificar se o período escolhido é manhã ou tarde.\",\n      },\n    },\n  ];\n}\n\n// ================================\n// PEGAR HORÁRIOS OCUPADOS DO AIRTABLE\n// ================================\nconst occupiedSlots = items\n  .map(item => {\n    const json = item.json || {};\n    return (\n      extractTime(json[\"Data e Hora de Início\"]) ||\n      extractTime(json.inicio) ||\n      extractTime(json.horario) ||\n      extractTime(json.data_hora) ||\n      extractTime(json.slot) ||\n      extractTime(json.start_time)\n    );\n  })\n  .filter(Boolean);\n\nconst occupiedSet = new Set(occupiedSlots);\n\n// ================================\n// GERAR SLOTS DO PERÍODO ESCOLHIDO\n// ================================\nconst faixa = PERIODOS[periodoIdentificado];\nconst todosSlots = gerarSlotsPeriodo(faixa.start, faixa.end, SLOT_MINUTES);\n\nconst horariosDisponiveis = todosSlots.filter(slot => !occupiedSet.has(slot));\n\n// ================================\n// MONTAR OPÇÕES NUMERADAS\n// ================================\nconst opcoes_horarios = horariosDisponiveis.map((horario, index) => ({\n  opcao: String(index + 1),\n  horario,\n  periodo: periodoIdentificado,\n}));\n\n// ================================\n// MENSAGEM\n// ================================\nconst tituloPeriodo = periodoIdentificado === \"MANHA\" ? \"manhã\" : \"tarde\";\nconst dataHumana = formatarDataHumana(itemBase);\n\nlet reply = \"\";\n\nif (horariosDisponiveis.length === 0) {\n  reply =\n    `Verifiquei nossa agenda e não encontrei horários disponíveis para ${dataHumana}, no período da ${tituloPeriodo} 😕\\n\\n` +\n    `Você pode escolher outro período ou outra data.`;\n} else {\n  const lista = opcoes_horarios\n    .map(item => `${item.opcao}️⃣ ${item.horario}`)\n    .join(\"\\n\\n\");\n\n  reply =\n    `Perfeito! Estes são os horários disponíveis para ${dataHumana}, no período da ${tituloPeriodo} 😊\\n\\n` +\n    `${lista}\\n\\n` +\n    `✍️ Responda apenas com o número do horário desejado.`;\n}\n\n// ================================\n// OUTPUT\n// ================================\nreturn [\n  {\n    json: {\n      ...itemBase,\n      periodo: periodoIdentificado,\n      horarios_ocupados: occupiedSlots,\n      horarios_disponiveis: horariosDisponiveis,\n      opcoes_horarios,\n      reply,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7808,
+        4704
+      ],
+      "id": "999bb7bd-0bdb-48ac-9f81-b8c63f5eb6b7",
+      "name": "Code in JavaScript13"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ff521c1-7980-4675-8b6f-31ec31607d55",
+              "name": "significado",
+              "value": "={{ $('Code in JavaScript12').item.json.significado }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7600,
+        4704
+      ],
+      "id": "8b03c279-d114-4cb8-a552-3462dcbe1a08",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "LrKcrvXutIoerlKD",
+          "mode": "list",
+          "cachedResultName": "ev_agent_sessions",
+          "cachedResultUrl": "/projects/0m3AYoFvtbqWOB3e/datatables/LrKcrvXutIoerlKD"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "={{ $('resposta concatenada').item.json.session.session_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        6992,
+        4912
+      ],
+      "id": "bfa7ffdc-72a7-4868-bb9d-511dede81383",
+      "name": "Get row(s)1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2bca143-455b-4c31-9c59-ef179e941d81",
+              "name": "session_id",
+              "value": "={{ $json.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a61832f9-38df-416d-aaaa-a92d901fc7f5",
+              "name": "stage",
+              "value": "={{ $json.stage }}",
+              "type": "string"
+            },
+            {
+              "id": "153d7a5a-304b-466a-8596-31dcd231dac0",
+              "name": "lead",
+              "value": "={{ $json.lead }}",
+              "type": "string"
+            },
+            {
+              "id": "9687706a-1f0b-4e99-8d54-913314e7e3c5",
+              "name": "peca",
+              "value": "={{ $json.peca }}",
+              "type": "string"
+            },
+            {
+              "id": "76844c9c-27fb-488b-9f32-75850c2f163a",
+              "name": "servico",
+              "value": "={{ $json.servico }}",
+              "type": "string"
+            },
+            {
+              "id": "d5bd5423-a7ca-403d-8a49-1482fcfd5659",
+              "name": "next_action",
+              "value": "={{ $json.next_action }}",
+              "type": "string"
+            },
+            {
+              "id": "fb179404-5545-4506-8995-a4717606b312",
+              "name": "preferencia_data",
+              "value": "={{ $json.preferencia_data }}",
+              "type": "string"
+            },
+            {
+              "id": "c7b39b8b-b3cd-4e5a-ace9-f2484372c787",
+              "name": "codigo",
+              "value": "={{ $('Switch').item.json.codigo }}",
+              "type": "number"
+            },
+            {
+              "id": "5790902d-f6ba-4a78-9918-6cfe0c824ba9",
+              "name": "nivel",
+              "value": "={{ $('Switch').item.json.nivel }}",
+              "type": "number"
+            },
+            {
+              "id": "c05561fa-4625-4e17-ab59-30ce504a049c",
+              "name": "id_produto",
+              "value": "={{ $('Switch').item.json.id_produto }}",
+              "type": "number"
+            },
+            {
+              "id": "24f2dd07-af33-482d-87cd-d38b15fe4b36",
+              "name": "piece_type",
+              "value": "={{ $('Switch').item.json.piece_type }}",
+              "type": "string"
+            },
+            {
+              "id": "fc29c1aa-26aa-4654-83d0-616fec2b63a9",
+              "name": "id_servico",
+              "value": "={{ $('Switch').item.json.id_servico }}",
+              "type": "number"
+            },
+            {
+              "id": "ab0ec482-b51e-4f0b-9a28-9cfcf204329b",
+              "name": "service_type",
+              "value": "={{ $('Switch').item.json.service_type }}",
+              "type": "string"
+            },
+            {
+              "id": "6726ada3-50af-4ece-a032-5885f309dd09",
+              "name": "preco",
+              "value": "={{ $('Switch').item.json.preco }}",
+              "type": "number"
+            },
+            {
+              "id": "a7cc0ca4-8a13-4d4f-b1d4-190b8476e327",
+              "name": "acao",
+              "value": "={{ $('Switch').item.json.acao }}",
+              "type": "string"
+            },
+            {
+              "id": "3263fba5-f6eb-4b48-b57d-07fc348b8af9",
+              "name": "significado",
+              "value": "={{ $('Switch').item.json.significado }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7200,
+        4912
+      ],
+      "id": "95731573-7735-42db-b4c7-0f827d1486c0",
+      "name": "Edit Fields9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\nconst fields = item.fields || {};\n\n// ================================\n// HELPERS\n// ================================\nfunction formatarDataHora(isoString) {\n  if (!isoString) return { data: \"\", hora: \"\" };\n\n  const date = new Date(isoString);\n\n  const dia = String(date.getDate()).padStart(2, \"0\");\n  const mes = String(date.getMonth() + 1).padStart(2, \"0\");\n  const ano = date.getFullYear();\n\n  const hora = String(date.getHours()).padStart(2, \"0\");\n  const minuto = String(date.getMinutes()).padStart(2, \"0\");\n\n  return {\n    data: `${dia}/${mes}/${ano}`,\n    hora: `${hora}:${minuto}`\n  };\n}\n\n// ================================\n// DADOS\n// ================================\nconst cliente = fields.Cliente || \"cliente\";\nconst tipo = fields[\"Tipo de Atendimento\"] || \"Atendimento\";\nconst peca = fields[\"Peça Relacionada\"] || \"\";\nconst dataISO = fields[\"Data\"];\n\nconst { data, hora } = formatarDataHora(dataISO);\n\n// ================================\n// MENSAGEM\n// ================================\nconst reply =\n  `Perfeito! Seu horário foi agendado com sucesso ✅\\n\\n` +\n  `📅 Data: ${data}\\n` +\n  `⏰ Horário: ${hora}\\n` +\n  `🧵 Serviço: ${peca}\\n` +\n  `📍 Tipo: ${tipo}\\n\\n` +\n  `Qualquer imprevisto, é só avisar com antecedência 😉\\n\\n` +\n  `Te esperamos! 😊`;\n\n// ================================\n// OUTPUT\n// ================================\nreturn [\n  {\n    json: {\n      ...item,\n      reply\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8000,
+        4912
+      ],
+      "id": "6030e715-fee7-43cf-8f5d-9aa1c55d4cfd",
+      "name": "Code in JavaScript14"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\n// ================================\n// HELPERS\n// ================================\nfunction extrairHorarioDoSignificado(significado) {\n  const texto = String(significado || \"\");\n  const match = texto.match(/(\\d{2}:\\d{2})/);\n  return match ? match[1] : null;\n}\n\nfunction somarMinutos(horario, minutos) {\n  const [h, m] = String(horario).split(\":\").map(Number);\n  const total = (h * 60) + m + minutos;\n  const novaHora = Math.floor(total / 60);\n  const novoMin = total % 60;\n\n  return `${String(novaHora).padStart(2, \"0\")}:${String(novoMin).padStart(2, \"0\")}`;\n}\n\n// ================================\n// DADOS\n// ================================\nconst data = item.preferencia_data || null;\nconst horaInicio = extrairHorarioDoSignificado(item.significado);\nconst horaFim = horaInicio ? somarMinutos(horaInicio, 30) : null;\n\n// Formato ISO sem timezone forçado\nconst dataHoraInicio = (data && horaInicio) ? `${data}T${horaInicio}:00` : null;\nconst dataHoraFim = (data && horaFim) ? `${data}T${horaFim}:00` : null;\n\n// ================================\n// OUTPUT\n// ================================\nreturn [\n  {\n    json: {\n      ...item,\n      hora_inicio: horaInicio,\n      hora_fim: horaFim,\n      data_hora_inicio: dataHoraInicio,\n      data_hora_fim: dataHoraFim,\n      duracao_min: 30\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7408,
+        4912
+      ],
+      "id": "e5fbc41a-33a6-4031-8979-fd304d917d3f",
+      "name": "Code in JavaScript15"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7302724d-b373-48a3-8751-551dfee92a49",
+              "leftValue": "={{ String($json.codigo) }}",
+              "rightValue": "=1",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        7040,
+        4272
+      ],
+      "id": "6a077196-6c33-4b15-b5bd-950bc3a66a62",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "message": "ação disponivel proximamente",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        7216,
+        4352
+      ],
+      "id": "12d18680-2486-42b6-a85c-7ecc75e8f482",
+      "name": "Respond to Chat1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const messages = $json.session?.messages || [];\n\n// ================================\n// ENCONTRAR ÚLTIMA MENSAGEM DO ASSISTANT\n// ================================\nlet lastAssistantIndex = -1;\n\nfor (let i = messages.length - 1; i >= 0; i--) {\n  if (messages[i].role === \"assistant\") {\n    lastAssistantIndex = i;\n    break;\n  }\n}\n\n// ================================\n// PEGAR RESPOSTAS NUMÉRICAS DO USER APÓS A ÚLTIMA PERGUNTA\n// ================================\nlet respostas = \"\";\n\nfor (let i = lastAssistantIndex + 1; i < messages.length; i++) {\n  const msg = messages[i];\n\n  if (msg.role === \"user\") {\n    const numeros = String(msg.text || \"\").replace(/\\D/g, \"\");\n\n    if (numeros) {\n      respostas += numeros;\n    }\n  }\n}\n\n// ================================\n// OUTPUT MANTENDO O JSON ANTERIOR\n// ================================\nreturn [\n  {\n    json: {\n      ...$json,\n      respostas_concatenadas: respostas,\n      total_respostas: respostas.length,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5968,
+        4336
+      ],
+      "id": "5bc4f6a4-2fbc-42a3-8201-e24378fce0cf",
+      "name": "resposta concatenada"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4e3373ef-de18-4891-8089-f8e4a8a5a866",
+              "leftValue": "={{ $json.opcao_servico }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5728,
+        4320
+      ],
+      "id": "692b392e-6844-476f-a03d-c198d0f0c6b1",
+      "name": "If10"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "9Jp2nQJXEaXlLro6",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/9Jp2nQJXEaXlLro6",
+          "cachedResultName": "careliz agente"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4064,
+        4608
+      ],
+      "id": "e5abd57e-efbf-4449-b1ea-39846713c244",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "careliz",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        4160,
+        3840
+      ],
+      "id": "ad129b44-c408-4681-9d70-1a56dd5964cf",
+      "name": "webhook",
+      "webhookId": "68e6f2b9-2fbe-4c84-9e85-b332dd2185a5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        8304,
+        3616
+      ],
+      "id": "615c3fdf-49c3-4ae6-b4eb-8ca0c47fa909",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        7936,
+        4032
+      ],
+      "id": "4ff12490-5484-4423-a45c-0fb2496762de",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        7936,
+        4240
+      ],
+      "id": "c37028c5-d59e-4ebb-b1d8-d443dceaa5b3",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $('Load Session').item.json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        8288,
+        4688
+      ],
+      "id": "85c2e051-ca4f-44ee-b40b-e651a7db5cef",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whats.dominuslabs.online/api/sessions/careliz-atelie/messages/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jid",
+              "value": "={{ $('Load Session').item.json.session.session_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        8272,
+        4912
+      ],
+      "id": "a544bb62-d8b3-4541-a491-e85ca5782252",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apptJsrbTwZAZKW7v",
+          "mode": "list",
+          "cachedResultName": "Agenda Careliz Ateliê",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl62hMwRDY57QR98",
+          "mode": "list",
+          "cachedResultName": "Agendamentos",
+          "cachedResultUrl": "https://airtable.com/apptJsrbTwZAZKW7v/tbl62hMwRDY57QR98"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Cliente": "={{ $json.lead }}",
+            "Data": "={{ $json.preferencia_data }}",
+            "Tipo de Atendimento": "Presencial",
+            "Duração (min)": 30,
+            "Peça Relacionada": "={{ $json.peca }} - {{ $json.servico }}",
+            "Data e Hora de Início": "={{ $json.data_hora_inicio }}",
+            "Data e Hora de Fim": "={{ $json.data_hora_fim }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Agendamento",
+              "displayName": "Agendamento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tipo de Atendimento",
+              "displayName": "Tipo de Atendimento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Presencial",
+                  "value": "Presencial"
+                },
+                {
+                  "name": "WhatsApp",
+                  "value": "WhatsApp"
+                },
+                {
+                  "name": "Consulta Médica",
+                  "value": "Consulta Médica"
+                },
+                {
+                  "name": "Retorno",
+                  "value": "Retorno"
+                },
+                {
+                  "name": "Exame Laboratorial",
+                  "value": "Exame Laboratorial"
+                },
+                {
+                  "name": "Vacinação",
+                  "value": "Vacinação"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Duração (min)",
+              "displayName": "Duração (min)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Finalizado?",
+              "displayName": "Finalizado?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Registro Pós-Atendimento",
+              "displayName": "Registro Pós-Atendimento",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Conflito de Horário?",
+              "displayName": "Conflito de Horário?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sem Conflito",
+                  "value": "Sem Conflito"
+                },
+                {
+                  "name": "Conflito Identificado",
+                  "value": "Conflito Identificado"
+                },
+                {
+                  "name": "Não",
+                  "value": "Não"
+                },
+                {
+                  "name": "Sim",
+                  "value": "Sim"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Criado em",
+              "displayName": "Criado em",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Peça Relacionada",
+              "displayName": "Peça Relacionada",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Data e Hora de Início",
+              "displayName": "Data e Hora de Início",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Data e Hora de Fim",
+              "displayName": "Data e Hora de Fim",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        7792,
+        4912
+      ],
+      "id": "e620801b-db32-4edc-a7cf-709d5ec70c9d",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wcq04FQmvJqztBBT",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "myn8n.seommerce.shop",
+            "user-agent": "node",
+            "content-length": "793",
+            "accept": "*/*",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "10.0.1.1",
+            "x-forwarded-host": "myn8n.seommerce.shop",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "a2ebcd9e59f4",
+            "x-real-ip": "10.0.1.1",
+            "x-whatsapp-event": "message.created",
+            "x-whatsapp-session": "careliz-atelie"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "message.created",
+            "emittedAt": "2026-03-31T12:39:05.015Z",
+            "session": {
+              "id": "careliz-atelie",
+              "name": "careliz atelie"
+            },
+            "conversation": {
+              "jid": "135940177690630@lid",
+              "title": "+13 (59) 4017769-0630",
+              "kind": "private",
+              "updatedAt": 1774960744000,
+              "unreadCount": 3,
+              "preview": "[audio]",
+              "lastMessageAt": 1774960744000,
+              "messageCount": 8
+            },
+            "message": {
+              "id": "AC6E4D615986E78725A06D366E2C29F3",
+              "jid": "135940177690630@lid",
+              "fromMe": false,
+              "text": "[audio]",
+              "timestamp": 1774960744,
+              "type": "audioMessage",
+              "status": "received",
+              "pushName": "Ester De Sequera",
+              "participant": null,
+              "media": {
+                "kind": "audio",
+                "mimeType": "audio/ogg; codecs=opus",
+                "fileName": null,
+                "fileSize": 102487,
+                "width": null,
+                "height": null,
+                "seconds": 47,
+                "isAnimated": false,
+                "url": "/api/sessions/careliz-atelie/media?messageId=AC6E4D615986E78725A06D366E2C29F3"
+              }
+            }
+          },
+          "webhookUrl": "https://myn8n.seommerce.shop/webhook/careliz",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Session": {
+      "main": [
+        [
+          {
+            "node": "Upsert session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Get Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Session": {
+      "main": [
+        [
+          {
+            "node": "Session exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session exists?": {
+      "main": [
+        [
+          {
+            "node": "Append Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Message": {
+      "main": [
+        [
+          {
+            "node": "Upsert session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert session": {
+      "main": [
+        [
+          {
+            "node": "Load Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Session": {
+      "main": [
+        [
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica tipo de mensagem": {
+      "main": [
+        [
+          {
+            "node": "Analyze audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Junta tudo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze audio": {
+      "main": [
+        [
+          {
+            "node": "extrai audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta tudo1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extrai audio": {
+      "main": [
+        [
+          {
+            "node": "Junta tudo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta tudo": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Junta tudo2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Junta tudo2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "Verifica tipo de mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update row(s)1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "If10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Chat3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update row(s)3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calça": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)4": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "calça",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update row(s)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript10": {
+      "main": [
+        [
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript11": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Chat8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript12": {
+      "main": [
+        [
+          {
+            "node": "Search records2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript13": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields9": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript15",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript15": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Chat1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "resposta concatenada": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If10": {
+      "main": [
+        [
+          {
+            "node": "resposta concatenada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "resposta concatenada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        []
+      ]
+    },
+    "webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript14": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2904540e-7c66-46be-ac6c-53c9c788a4ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97d0340451500c497a5b6e522a54af57ef01e20f3726cc40f6c0e675d1f1e296"
+  },
+  "id": "L3wxYTx0OuYqukZR",
+  "tags": []
+}
