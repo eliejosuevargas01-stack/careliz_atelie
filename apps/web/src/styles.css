@@ -1158,6 +1158,82 @@ button {
   gap: 8px;
 }
 
+.availability-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 251, 247, 0.98), rgba(247, 239, 230, 0.9)),
+    radial-gradient(circle at top right, rgba(198, 105, 45, 0.08), transparent 34%);
+}
+
+.weekday-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.weekday-pill {
+  border: 1px solid rgba(63, 34, 21, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 10px 8px;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  box-shadow: none;
+}
+
+.weekday-pill span {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.weekday-pill strong {
+  font-size: 1.1rem;
+  color: var(--accent-deep);
+}
+
+.weekday-pill.is-active {
+  border-color: rgba(198, 105, 45, 0.34);
+  background: linear-gradient(135deg, rgba(198, 105, 45, 0.12), rgba(255, 255, 255, 0.9));
+}
+
+.availability-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.availability-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(63, 34, 21, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.availability-actions {
+  grid-auto-flow: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.subtle-link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  color: var(--danger);
+  background: transparent;
+}
+
+.subtle-link:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1348,6 +1424,15 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .weekday-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .availability-actions {
+    grid-auto-flow: row;
+    justify-content: stretch;
+  }
+
   .workspace-guide-button {
     min-height: 56px;
   }
@@ -1504,6 +1589,14 @@ button {
   .toolbar-tab {
     gap: 8px;
     padding-inline: 12px;
+  }
+
+  .weekday-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .weekday-pill {
+    padding: 8px 6px;
   }
 
   .calendar-period-header {

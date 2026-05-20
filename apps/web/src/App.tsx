@@ -6,6 +6,7 @@ import { EventPanel } from "./components/EventPanel";
 import { SidebarDatePicker } from "./components/SidebarDatePicker";
 import {
   BlockPanel,
+  AvailabilityManagerPanel,
   DayQueuesPanel,
   ProductionPanel,
   type AgendaViewMode,
@@ -13,9 +14,11 @@ import {
 import logo from "./assets/logo_Careliz_atelie.jpeg";
 import type {
   AvailabilityResponse,
+  AvailabilityWindowsResponse,
   CalendarEventItem,
   CalendarResponse,
   CatalogResponse,
+  NextAvailabilityResponse,
   ProductionResponse,
   SetupResponse,
 } from "./types";
@@ -61,8 +64,12 @@ export default function App() {
   const [isVisitComposerOpen, setIsVisitComposerOpen] = useState(false);
   const [setup, setSetup] = useState<SetupResponse | null>(null);
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
+  const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindowsResponse | null>(
+    null,
+  );
   const [calendar, setCalendar] = useState<CalendarResponse | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
+  const [nextAvailability, setNextAvailability] = useState<NextAvailabilityResponse | null>(null);
   const [production, setProduction] = useState<ProductionResponse | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -71,24 +78,29 @@ export default function App() {
   );
 
   const loadStatic = async () => {
-    const [setupResponse, catalogResponse] = await Promise.all([
+    const [setupResponse, catalogResponse, availabilityWindowsResponse] = await Promise.all([
       api.get<SetupResponse>("/api/setup"),
       api.get<CatalogResponse>("/api/catalog"),
+      api.get<AvailabilityWindowsResponse>("/api/availability/windows"),
     ]);
 
     setSetup(setupResponse);
     setCatalog(catalogResponse);
+    setAvailabilityWindows(availabilityWindowsResponse);
   };
 
   const loadDynamic = async (date: string) => {
-    const [calendarResponse, availabilityResponse, productionResponse] = await Promise.all([
-      api.get<CalendarResponse>(`/api/calendar?date=${date}`),
-      api.get<AvailabilityResponse>(`/api/calendar/availability?date=${date}`),
-      api.get<ProductionResponse>("/api/production"),
-    ]);
+    const [calendarResponse, availabilityResponse, nextAvailabilityResponse, productionResponse] =
+      await Promise.all([
+        api.get<CalendarResponse>(`/api/calendar?date=${date}`),
+        api.get<AvailabilityResponse>(`/api/calendar/availability?date=${date}`),
+        api.get<NextAvailabilityResponse>(`/api/calendar/next-available?date=${date}`),
+        api.get<ProductionResponse>("/api/production"),
+      ]);
 
     setCalendar(calendarResponse);
     setAvailability(availabilityResponse);
+    setNextAvailability(nextAvailabilityResponse);
     setProduction(productionResponse);
   };
 
@@ -155,6 +167,11 @@ export default function App() {
         item.productionStatus === "entregue",
     ) ?? [];
   const firstFreeSlot = availability?.horarios_disponiveis[0] ?? null;
+  const nextUsefulSlot = firstFreeSlot
+    ? `${selectedDate} • ${firstFreeSlot}`
+    : nextAvailability
+      ? `${nextAvailability.nextDate} • ${nextAvailability.nextSlot.label}`
+      : "Sem janela útil";
   const selectedVisit =
     selectedEvent && selectedEvent.typeEvent !== "producao" ? selectedEvent : null;
   const selectedEventSummary = selectedEvent
@@ -232,7 +249,7 @@ export default function App() {
             </article>
             <article className="hero-card">
               <span>Próximo horário livre</span>
-              <strong>{firstFreeSlot ?? "Sem janela útil"}</strong>
+              <strong>{nextUsefulSlot}</strong>
             </article>
             <article className="hero-card">
               <span>Produção pendente</span>
@@ -258,6 +275,30 @@ export default function App() {
             </div>
 
             <div className="sidebar-stack">
+              <AvailabilityManagerPanel
+                onClearDay={async (weekday) => {
+                  await api.delete(`/api/availability/windows/${weekday}`);
+                  setFeedback({ type: "success", text: "Expediente removido para o dia." });
+                  const windowsResponse = await api.get<AvailabilityWindowsResponse>(
+                    "/api/availability/windows",
+                  );
+                  setAvailabilityWindows(windowsResponse);
+                  await refreshDay();
+                }}
+                onSave={async (weekday, windows) => {
+                  await api.put(`/api/availability/windows/${weekday}`, {
+                    windows,
+                  });
+                  setFeedback({ type: "success", text: "Expediente atualizado com sucesso." });
+                  const windowsResponse = await api.get<AvailabilityWindowsResponse>(
+                    "/api/availability/windows",
+                  );
+                  setAvailabilityWindows(windowsResponse);
+                  await refreshDay();
+                }}
+                windows={availabilityWindows?.windows ?? []}
+              />
+
               {selectedVisit ? (
                 <>
                   <EventPanel
@@ -365,6 +406,30 @@ export default function App() {
             </div>
 
             <div className="sidebar-stack">
+              <AvailabilityManagerPanel
+                onClearDay={async (weekday) => {
+                  await api.delete(`/api/availability/windows/${weekday}`);
+                  setFeedback({ type: "success", text: "Expediente removido para o dia." });
+                  const windowsResponse = await api.get<AvailabilityWindowsResponse>(
+                    "/api/availability/windows",
+                  );
+                  setAvailabilityWindows(windowsResponse);
+                  await refreshDay();
+                }}
+                onSave={async (weekday, windows) => {
+                  await api.put(`/api/availability/windows/${weekday}`, {
+                    windows,
+                  });
+                  setFeedback({ type: "success", text: "Expediente atualizado com sucesso." });
+                  const windowsResponse = await api.get<AvailabilityWindowsResponse>(
+                    "/api/availability/windows",
+                  );
+                  setAvailabilityWindows(windowsResponse);
+                  await refreshDay();
+                }}
+                windows={availabilityWindows?.windows ?? []}
+              />
+
               <ProductionPanel
                 catalog={catalog?.items ?? []}
                 eligibleVisitCount={visitsReadyForProduction.length}

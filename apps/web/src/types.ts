@@ -10,6 +10,10 @@ export type AvailabilityWindow = {
   label?: string | null;
   startTime: string;
   endTime: string;
+  active?: boolean;
+  intervalMin?: number;
+  slotDurationMin?: number;
+  capacityPerSlot?: number;
 };
 
 export type SetupResponse = {
@@ -95,6 +99,20 @@ export type AvailabilityResponse = {
   horarios_disponiveis: string[];
   options_map: Record<string, string>;
   occupiedCount: number;
+};
+
+export type NextAvailabilityResponse = {
+  requestedDate: string;
+  nextDate: string;
+  nextSlot: AvailabilitySlot;
+  searchedDays: number;
+  durationMin: number;
+  preferredPeriod: "manha" | "tarde" | "qualquer";
+  availability: AvailabilityResponse;
+};
+
+export type AvailabilityWindowsResponse = {
+  windows: AvailabilityWindow[];
 };
 
 export type ProductionItem = {

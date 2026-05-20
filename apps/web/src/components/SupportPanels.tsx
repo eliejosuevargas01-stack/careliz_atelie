@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { CalendarBlock, CalendarEventItem, CatalogItem, ProductionItem } from "../types";
+import type {
+  AvailabilityWindow,
+  CalendarBlock,
+  CalendarEventItem,
+  CatalogItem,
+  ProductionItem,
+} from "../types";
 
 export type AgendaViewMode = "producao" | "visitas" | "a_entregar" | "entregues";
 
@@ -33,6 +39,22 @@ type DayQueuesPanelProps = {
   selectedDateLabel: string;
 };
 
+type AvailabilityWindowDraft = {
+  startTime: string;
+  endTime: string;
+  label: string;
+  active: boolean;
+  intervalMin: number;
+  slotDurationMin: number;
+  capacityPerSlot: number;
+};
+
+type AvailabilityManagerPanelProps = {
+  windows: AvailabilityWindow[];
+  onSave: (weekday: number, windows: AvailabilityWindowDraft[]) => Promise<void>;
+  onClearDay: (weekday: number) => Promise<void>;
+};
+
 const toIso = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
 
 const formatDateTime = (value?: string | null) => {
@@ -48,6 +70,26 @@ const formatDateTime = (value?: string | null) => {
     timeZone: "America/Sao_Paulo",
   });
 };
+
+const weekdayLabels = [
+  { value: 1, label: "Seg" },
+  { value: 2, label: "Ter" },
+  { value: 3, label: "Qua" },
+  { value: 4, label: "Qui" },
+  { value: 5, label: "Sex" },
+  { value: 6, label: "Sáb" },
+  { value: 7, label: "Dom" },
+];
+
+const createWindowDraft = (window?: Partial<AvailabilityWindow>): AvailabilityWindowDraft => ({
+  startTime: window?.startTime ?? "07:00",
+  endTime: window?.endTime ?? "11:00",
+  label: window?.label ?? "",
+  active: window?.active ?? true,
+  intervalMin: window?.intervalMin ?? 10,
+  slotDurationMin: window?.slotDurationMin ?? 30,
+  capacityPerSlot: window?.capacityPerSlot ?? 1,
+});
 
 export const BlockPanel = ({ defaultDate, blocks, onCreate, onDelete }: BlockPanelProps) => {
   const [reason, setReason] = useState("");
@@ -155,6 +197,228 @@ export const BlockPanel = ({ defaultDate, blocks, onCreate, onDelete }: BlockPan
             </article>
           ))
         )}
+      </div>
+    </section>
+  );
+};
+
+export const AvailabilityManagerPanel = ({
+  windows,
+  onSave,
+  onClearDay,
+}: AvailabilityManagerPanelProps) => {
+  const [selectedWeekday, setSelectedWeekday] = useState(1);
+  const [drafts, setDrafts] = useState<AvailabilityWindowDraft[]>([createWindowDraft()]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const weekdayWindows = windows
+      .filter((window) => window.weekday === selectedWeekday)
+      .sort((left, right) => left.startTime.localeCompare(right.startTime));
+
+    setDrafts(
+      weekdayWindows.length > 0 ? weekdayWindows.map((window) => createWindowDraft(window)) : [createWindowDraft()],
+    );
+  }, [selectedWeekday, windows]);
+
+  const countsByDay = useMemo(
+    () =>
+      weekdayLabels.reduce<Record<number, number>>((accumulator, day) => {
+        accumulator[day.value] = windows.filter((window) => window.weekday === day.value).length;
+        return accumulator;
+      }, {}),
+    [windows],
+  );
+
+  return (
+    <section className="panel compact-panel availability-panel">
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Expediente</p>
+          <h2>Horários de atendimento</h2>
+          <p className="panel-copy">
+            Defina as faixas da semana. A agenda só libera o que estiver configurado aqui.
+          </p>
+        </div>
+      </div>
+
+      <div className="weekday-strip" role="tablist" aria-label="Dias do expediente">
+        {weekdayLabels.map((day) => (
+          <button
+            key={day.value}
+            type="button"
+            className={`weekday-pill ${selectedWeekday === day.value ? "is-active" : ""}`}
+            onClick={() => setSelectedWeekday(day.value)}
+          >
+            <span>{day.label}</span>
+            <strong>{countsByDay[day.value] ?? 0}</strong>
+          </button>
+        ))}
+      </div>
+
+      <div className="availability-editor">
+        {drafts.map((draft, index) => (
+          <article className="availability-row" key={`${selectedWeekday}-${index}`}>
+            <div className="split">
+              <label>
+                <span>Início</span>
+                <input
+                  type="time"
+                  value={draft.startTime}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, startTime: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                <span>Fim</span>
+                <input
+                  type="time"
+                  value={draft.endTime}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, endTime: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="split">
+              <label>
+                <span>Rótulo</span>
+                <input
+                  placeholder="Manha / Tarde"
+                  value={draft.label}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, label: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                <span>Capacidade</span>
+                <select
+                  value={String(draft.capacityPerSlot)}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, capacityPerSlot: Number(event.target.value) }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="1">1 cliente</option>
+                  <option value="2">2 clientes</option>
+                  <option value="3">3 clientes</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="split">
+              <label>
+                <span>Intervalo</span>
+                <select
+                  value={String(draft.intervalMin)}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, intervalMin: Number(event.target.value) } : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="5">5 min</option>
+                  <option value="10">10 min</option>
+                  <option value="15">15 min</option>
+                  <option value="20">20 min</option>
+                </select>
+              </label>
+              <label>
+                <span>Slot</span>
+                <select
+                  value={String(draft.slotDurationMin)}
+                  onChange={(event) =>
+                    setDrafts((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, slotDurationMin: Number(event.target.value) }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="20">20 min</option>
+                  <option value="30">30 min</option>
+                  <option value="40">40 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </label>
+            </div>
+
+            <button
+              className="ghost-button subtle-link"
+              type="button"
+              onClick={() =>
+                setDrafts((current) => current.filter((_, itemIndex) => itemIndex !== index))
+              }
+            >
+              Remover faixa
+            </button>
+          </article>
+        ))}
+      </div>
+
+      <div className="queue-action-group availability-actions">
+        <button
+          className="secondary-button"
+          disabled={saving}
+          type="button"
+          onClick={() => setDrafts((current) => [...current, createWindowDraft()])}
+        >
+          Adicionar faixa
+        </button>
+        <button
+          className="ghost-button"
+          disabled={saving}
+          type="button"
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onClearDay(selectedWeekday);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          Limpar dia
+        </button>
+        <button
+          className="primary-button"
+          disabled={saving}
+          type="button"
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onSave(selectedWeekday, drafts);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          Salvar expediente
+        </button>
       </div>
     </section>
   );
