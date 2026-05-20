@@ -157,3 +157,25 @@ export type ProductionItem = {
 export type ProductionResponse = {
   items: ProductionItem[];
 };
+
+export type NotificationAlert = {
+  id: string;
+  title?: string | null;
+  message: string;
+  audioUrl?: string | null;
+  source?: string | null;
+  repeatIntervalSeconds?: number;
+  status: string;
+  metadata?: unknown;
+  acknowledgedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type NotificationsResponse = {
+  items: NotificationAlert[];
+};
+
+export type CurrentNotificationResponse = {
+  current: NotificationAlert | null;
+};

@@ -165,6 +165,22 @@ model InteractionHistory {
   @@index([channel])
 }
 
+model NotificationAlert {
+  id                    String   @id @default(cuid())
+  title                 String?
+  message               String
+  audioUrl              String?
+  source                String?
+  repeatIntervalSeconds Int      @default(6)
+  status                String   @default("pending")
+  metadata              Json?
+  acknowledgedAt        DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
 model AgentSession {
   id              String   @id @default(cuid())
   sessionId       String   @unique

@@ -10,6 +10,7 @@ import { eventsRouter } from "./routes/events";
 import { healthRouter } from "./routes/health";
 import { interactionsRouter } from "./routes/interactions";
 import { availabilityRouter } from "./routes/availability";
+import { notificationsRouter } from "./routes/notifications";
 import { productionRouter } from "./routes/production";
 import { sessionsRouter } from "./routes/sessions";
 import { setupRouter } from "./routes/setup";
@@ -32,6 +33,7 @@ app.use("/api", availabilityRouter);
 app.use("/api", calendarRouter);
 app.use("/api", eventsRouter);
 app.use("/api", blocksRouter);
+app.use("/api", notificationsRouter);
 app.use("/api", productionRouter);
 app.use("/api", interactionsRouter);
 

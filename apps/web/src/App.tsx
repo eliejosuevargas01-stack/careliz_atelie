@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "./lib/api";
 import { AgendaBoard } from "./components/AgendaBoard";
 import { EventPanel } from "./components/EventPanel";
+import { NotificationCenter } from "./components/NotificationCenter";
 import { SidebarDatePicker } from "./components/SidebarDatePicker";
 import {
   BlockPanel,
@@ -19,7 +20,10 @@ import type {
   CalendarEventItem,
   CalendarResponse,
   CatalogResponse,
+  CurrentNotificationResponse,
   NextAvailabilityResponse,
+  NotificationAlert,
+  NotificationsResponse,
   ProductionResponse,
   SetupResponse,
 } from "./types";
@@ -62,6 +66,7 @@ const sortByStartAt = (left: { startAt: string }, right: { startAt: string }) =>
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [activeAgendaMode, setActiveAgendaMode] = useState<AgendaViewMode>("visitas");
+  const [activeScreen, setActiveScreen] = useState<"agenda" | "notificacoes">("agenda");
   const [isVisitComposerOpen, setIsVisitComposerOpen] = useState(false);
   const [setup, setSetup] = useState<SetupResponse | null>(null);
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
@@ -75,6 +80,9 @@ export default function App() {
   const [nextAvailability, setNextAvailability] = useState<NextAvailabilityResponse | null>(null);
   const [production, setProduction] = useState<ProductionResponse | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
+  const [currentNotification, setCurrentNotification] = useState<NotificationAlert | null>(null);
+  const [recentNotifications, setRecentNotifications] = useState<NotificationAlert[]>([]);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
     null,
@@ -111,6 +119,16 @@ export default function App() {
     setProduction(productionResponse);
   };
 
+  const loadNotifications = async () => {
+    const [currentResponse, recentResponse] = await Promise.all([
+      api.get<CurrentNotificationResponse>("/api/notifications/current"),
+      api.get<NotificationsResponse>("/api/notifications?limit=8"),
+    ]);
+
+    setCurrentNotification(currentResponse.current);
+    setRecentNotifications(recentResponse.items);
+  };
+
   useEffect(() => {
     loadStatic().catch((error: Error) => {
       setFeedback({ type: "error", text: error.message });
@@ -122,6 +140,80 @@ export default function App() {
       setFeedback({ type: "error", text: error.message });
     });
   }, [selectedDate]);
+
+  useEffect(() => {
+    const preference = window.localStorage.getItem("careliz-notification-sound");
+    setSoundEnabled(preference === "enabled");
+  }, []);
+
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        await loadNotifications();
+      } catch (error) {
+        setFeedback({ type: "error", text: error instanceof Error ? error.message : "Falha ao consultar notificações." });
+      }
+    };
+
+    void poll();
+    const interval = window.setInterval(() => {
+      void poll();
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!soundEnabled || !currentNotification) {
+      return;
+    }
+
+    let cancelled = false;
+    const repeatIntervalMs = Math.max(currentNotification.repeatIntervalSeconds ?? 6, 3) * 1000;
+    let intervalId: number | null = null;
+
+    const playTone = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      try {
+        if (currentNotification.audioUrl) {
+          const audio = new Audio(currentNotification.audioUrl);
+          audio.preload = "auto";
+          await audio.play();
+          return;
+        }
+
+        const audioContext = new window.AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.04;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.25);
+      } catch {
+        return;
+      }
+    };
+
+    void playTone();
+    intervalId = window.setInterval(() => {
+      void playTone();
+    }, repeatIntervalMs);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [currentNotification, soundEnabled]);
 
   const refreshDay = async () => {
     await loadDynamic(selectedDate);
@@ -192,6 +284,20 @@ export default function App() {
     await refreshDay();
   };
 
+  const acknowledgeNotification = async (id: string) => {
+    await api.patch(`/api/notifications/${id}/acknowledge`, {});
+    setFeedback({ type: "success", text: "Notificação confirmada." });
+    await loadNotifications();
+  };
+
+  const toggleNotificationSound = () => {
+    setSoundEnabled((current) => {
+      const nextValue = !current;
+      window.localStorage.setItem("careliz-notification-sound", nextValue ? "enabled" : "disabled");
+      return nextValue;
+    });
+  };
+
   return (
     <main className="app-shell">
       <section className="workspace">
@@ -210,7 +316,32 @@ export default function App() {
           </div>
 
           <div className="workspace-toolbar-actions">
-            <SidebarDatePicker onChange={setSelectedDate} value={selectedDate} />
+            <div className="workspace-switcher" role="tablist" aria-label="Seletor de tela">
+              <button
+                className={`workspace-switch ${activeScreen === "agenda" ? "is-active" : ""}`}
+                onClick={() => setActiveScreen("agenda")}
+                type="button"
+              >
+                Agenda
+              </button>
+              <button
+                className={`workspace-switch ${activeScreen === "notificacoes" ? "is-active" : ""}`}
+                onClick={() => setActiveScreen("notificacoes")}
+                type="button"
+              >
+                Notificações
+                {currentNotification ? <span className="switch-badge" /> : null}
+              </button>
+            </div>
+
+            {activeScreen === "agenda" ? (
+              <SidebarDatePicker onChange={setSelectedDate} value={selectedDate} />
+            ) : (
+              <button className="notification-toggle" onClick={toggleNotificationSound} type="button">
+                {soundEnabled ? "Som ativo" : "Ativar som"}
+              </button>
+            )}
+
             <button
               className="primary-button workspace-guide-button"
               onClick={() => setIsGuideOpen(true)}
@@ -230,6 +361,7 @@ export default function App() {
           </div>
         ) : null}
 
+        <div className={`workspace-content ${activeScreen === "agenda" ? "" : "is-hidden"}`}>
         <DayQueuesPanel
           activeMode={activeAgendaMode}
           attendanceEvents={attendanceEvents}
@@ -637,6 +769,17 @@ export default function App() {
               </div>
             </section>
           </div>
+        ) : null}
+        </div>
+
+        {activeScreen === "notificacoes" ? (
+          <NotificationCenter
+            currentNotification={currentNotification}
+            onAcknowledge={acknowledgeNotification}
+            onEnableSound={toggleNotificationSound}
+            recentNotifications={recentNotifications}
+            soundEnabled={soundEnabled}
+          />
         ) : null}
       </section>
     </main>
