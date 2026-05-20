@@ -14,6 +14,7 @@ import {
 import logo from "./assets/logo_Careliz_atelie.jpeg";
 import type {
   AvailabilityResponse,
+  AvailabilityOverridesResponse,
   AvailabilityWindowsResponse,
   CalendarEventItem,
   CalendarResponse,
@@ -67,6 +68,8 @@ export default function App() {
   const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindowsResponse | null>(
     null,
   );
+  const [availabilityOverrides, setAvailabilityOverrides] =
+    useState<AvailabilityOverridesResponse | null>(null);
   const [calendar, setCalendar] = useState<CalendarResponse | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
   const [nextAvailability, setNextAvailability] = useState<NextAvailabilityResponse | null>(null);
@@ -87,6 +90,10 @@ export default function App() {
     setSetup(setupResponse);
     setCatalog(catalogResponse);
     setAvailabilityWindows(availabilityWindowsResponse);
+    const availabilityOverridesResponse = await api.get<AvailabilityOverridesResponse>(
+      "/api/availability/overrides",
+    );
+    setAvailabilityOverrides(availabilityOverridesResponse);
   };
 
   const loadDynamic = async (date: string) => {
@@ -276,7 +283,16 @@ export default function App() {
 
             <div className="sidebar-stack">
               <AvailabilityManagerPanel
-                onClearDay={async (weekday) => {
+                onDeleteOverride={async (date) => {
+                  await api.delete(`/api/availability/overrides/${date}`);
+                  setFeedback({ type: "success", text: "Exceção removida com sucesso." });
+                  const overridesResponse = await api.get<AvailabilityOverridesResponse>(
+                    "/api/availability/overrides",
+                  );
+                  setAvailabilityOverrides(overridesResponse);
+                  await refreshDay();
+                }}
+                onDeleteStandardDay={async (weekday) => {
                   await api.delete(`/api/availability/windows/${weekday}`);
                   setFeedback({ type: "success", text: "Expediente removido para o dia." });
                   const windowsResponse = await api.get<AvailabilityWindowsResponse>(
@@ -285,17 +301,42 @@ export default function App() {
                   setAvailabilityWindows(windowsResponse);
                   await refreshDay();
                 }}
-                onSave={async (weekday, windows) => {
-                  await api.put(`/api/availability/windows/${weekday}`, {
-                    windows,
-                  });
-                  setFeedback({ type: "success", text: "Expediente atualizado com sucesso." });
+                onSaveOverride={async (date, payload) => {
+                  await api.put(`/api/availability/overrides/${date}`, payload);
+                  setFeedback({ type: "success", text: "Exceção salva com sucesso." });
+                  const overridesResponse = await api.get<AvailabilityOverridesResponse>(
+                    "/api/availability/overrides",
+                  );
+                  setAvailabilityOverrides(overridesResponse);
+                  await refreshDay();
+                }}
+                onSaveStandard={async (weekdays, windows) => {
+                  const normalizedWeekdays = weekdays.length > 0 ? weekdays : [1, 2, 3, 4, 5];
+
+                  await Promise.all(
+                    normalizedWeekdays.map((weekday) =>
+                      api.put(`/api/availability/windows/${weekday}`, {
+                        windows,
+                      }),
+                    ),
+                  );
+
+                  const weekdaysToClear = [1, 2, 3, 4, 5, 6, 7].filter(
+                    (weekday) => !normalizedWeekdays.includes(weekday),
+                  );
+
+                  await Promise.all(
+                    weekdaysToClear.map((weekday) => api.delete(`/api/availability/windows/${weekday}`)),
+                  );
+
+                  setFeedback({ type: "success", text: "Expediente padrão atualizado com sucesso." });
                   const windowsResponse = await api.get<AvailabilityWindowsResponse>(
                     "/api/availability/windows",
                   );
                   setAvailabilityWindows(windowsResponse);
                   await refreshDay();
                 }}
+                overrides={availabilityOverrides?.overrides ?? []}
                 windows={availabilityWindows?.windows ?? []}
               />
 
@@ -407,7 +448,16 @@ export default function App() {
 
             <div className="sidebar-stack">
               <AvailabilityManagerPanel
-                onClearDay={async (weekday) => {
+                onDeleteOverride={async (date) => {
+                  await api.delete(`/api/availability/overrides/${date}`);
+                  setFeedback({ type: "success", text: "Exceção removida com sucesso." });
+                  const overridesResponse = await api.get<AvailabilityOverridesResponse>(
+                    "/api/availability/overrides",
+                  );
+                  setAvailabilityOverrides(overridesResponse);
+                  await refreshDay();
+                }}
+                onDeleteStandardDay={async (weekday) => {
                   await api.delete(`/api/availability/windows/${weekday}`);
                   setFeedback({ type: "success", text: "Expediente removido para o dia." });
                   const windowsResponse = await api.get<AvailabilityWindowsResponse>(
@@ -416,17 +466,42 @@ export default function App() {
                   setAvailabilityWindows(windowsResponse);
                   await refreshDay();
                 }}
-                onSave={async (weekday, windows) => {
-                  await api.put(`/api/availability/windows/${weekday}`, {
-                    windows,
-                  });
-                  setFeedback({ type: "success", text: "Expediente atualizado com sucesso." });
+                onSaveOverride={async (date, payload) => {
+                  await api.put(`/api/availability/overrides/${date}`, payload);
+                  setFeedback({ type: "success", text: "Exceção salva com sucesso." });
+                  const overridesResponse = await api.get<AvailabilityOverridesResponse>(
+                    "/api/availability/overrides",
+                  );
+                  setAvailabilityOverrides(overridesResponse);
+                  await refreshDay();
+                }}
+                onSaveStandard={async (weekdays, windows) => {
+                  const normalizedWeekdays = weekdays.length > 0 ? weekdays : [1, 2, 3, 4, 5];
+
+                  await Promise.all(
+                    normalizedWeekdays.map((weekday) =>
+                      api.put(`/api/availability/windows/${weekday}`, {
+                        windows,
+                      }),
+                    ),
+                  );
+
+                  const weekdaysToClear = [1, 2, 3, 4, 5, 6, 7].filter(
+                    (weekday) => !normalizedWeekdays.includes(weekday),
+                  );
+
+                  await Promise.all(
+                    weekdaysToClear.map((weekday) => api.delete(`/api/availability/windows/${weekday}`)),
+                  );
+
+                  setFeedback({ type: "success", text: "Expediente padrão atualizado com sucesso." });
                   const windowsResponse = await api.get<AvailabilityWindowsResponse>(
                     "/api/availability/windows",
                   );
                   setAvailabilityWindows(windowsResponse);
                   await refreshDay();
                 }}
+                overrides={availabilityOverrides?.overrides ?? []}
                 windows={availabilityWindows?.windows ?? []}
               />
 

@@ -16,6 +16,26 @@ export type AvailabilityWindow = {
   capacityPerSlot?: number;
 };
 
+export type AvailabilityOverrideWindow = {
+  startTime: string;
+  endTime: string;
+  label?: string | null;
+  intervalMin?: number;
+  slotDurationMin?: number;
+  capacityPerSlot?: number;
+};
+
+export type AvailabilityOverride = {
+  id: string;
+  date: string;
+  mode: "work" | "off";
+  label?: string | null;
+  reason?: string | null;
+  windows?: AvailabilityOverrideWindow[] | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type SetupResponse = {
   professional: Professional | null;
   availability: AvailabilityWindow[];
@@ -113,6 +133,10 @@ export type NextAvailabilityResponse = {
 
 export type AvailabilityWindowsResponse = {
   windows: AvailabilityWindow[];
+};
+
+export type AvailabilityOverridesResponse = {
+  overrides: AvailabilityOverride[];
 };
 
 export type ProductionItem = {

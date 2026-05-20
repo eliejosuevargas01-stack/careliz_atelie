@@ -37,10 +37,78 @@ type NextAvailableInput = {
   searchLimitDays?: number;
 };
 
+type AvailabilityWindowSource = {
+  startTime: string;
+  endTime: string;
+  label?: string | null;
+  active: boolean;
+  intervalMin: number;
+  slotDurationMin: number;
+  capacityPerSlot: number;
+};
+
 const activeEventWhere = {
   status: {
     notIn: [...nonBlockingStatuses],
   },
+};
+
+const normalizeOverrideWindows = (value: unknown): AvailabilityWindowSource[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return [];
+    }
+
+    const candidate = item as Partial<AvailabilityWindowSource>;
+
+    if (typeof candidate.startTime !== "string" || typeof candidate.endTime !== "string") {
+      return [];
+    }
+
+    return [
+      {
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        label: candidate.label ?? null,
+        active: candidate.active ?? true,
+        intervalMin: candidate.intervalMin ?? 10,
+        slotDurationMin: candidate.slotDurationMin ?? 30,
+        capacityPerSlot: candidate.capacityPerSlot ?? 1,
+      },
+    ];
+  });
+};
+
+const getDateWindows = async (date: string) => {
+  const override = await prisma.availabilityOverride.findUnique({
+    where: { date },
+  });
+
+  if (override?.mode === "off") {
+    return {
+      windows: [] as AvailabilityWindowSource[],
+      override,
+    };
+  }
+
+  if (override?.mode === "work") {
+    return {
+      windows: normalizeOverrideWindows(override.windows),
+      override,
+    };
+  }
+
+  const weekday = getBusinessWeekday(date);
+  const windows = await prisma.availabilityWindow.findMany({
+    where: { weekday, active: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  return { windows, override };
 };
 
 export const getDefaultProfessional = async () => {
@@ -64,11 +132,7 @@ export const ensureWithinAvailability = async (startAt: Date, endAt: Date) => {
     throw new AppError(400, "O evento deve comecar e terminar no mesmo dia.");
   }
 
-  const weekday = getBusinessWeekday(startDate);
-  const windows = await prisma.availabilityWindow.findMany({
-    where: { weekday, active: true },
-    orderBy: { startTime: "asc" },
-  });
+  const { windows } = await getDateWindows(startDate);
 
   const isInsideWindow = windows.some((window) => {
     const windowStart = combineBusinessDateTime(startDate, window.startTime);
@@ -136,14 +200,10 @@ export const getAvailabilityForDate = async ({
   durationMin = 30,
   preferredPeriod,
 }: AvailabilityInput) => {
-  const weekday = getBusinessWeekday(date);
   const { start, end } = getBusinessDayRange(date);
 
-  const [windows, events, blocks] = await Promise.all([
-      prisma.availabilityWindow.findMany({
-        where: { weekday, active: true },
-        orderBy: { startTime: "asc" },
-      }),
+  const [{ windows }, events, blocks] = await Promise.all([
+      getDateWindows(date),
       prisma.calendarEvent.findMany({
         where: {
           ...activeEventWhere,
@@ -174,9 +234,14 @@ export const getAvailabilityForDate = async ({
   }> = [];
 
   for (const window of windows) {
+    if (window.active === false) {
+      continue;
+    }
+
     let cursor = combineBusinessDateTime(date, window.startTime);
     const windowEnd = combineBusinessDateTime(date, window.endTime);
     const slotStep = window.slotDurationMin || DEFAULT_SLOT_DURATION_MINUTES;
+    const slotCapacity = window.capacityPerSlot || 1;
 
     while (isBefore(addMinutes(cursor, durationMin), addMinutes(windowEnd, 1))) {
       const candidateEnd = addMinutes(cursor, durationMin);
@@ -195,7 +260,7 @@ export const getAvailabilityForDate = async ({
       );
 
       if (
-        overlappingEvents.length < window.capacityPerSlot &&
+        overlappingEvents.length < slotCapacity &&
         overlappingBlocks.length === 0
       ) {
         const label = getBusinessTimeString(cursor);

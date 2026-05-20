@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import type {
   AvailabilityWindow,
+  AvailabilityOverride,
+  AvailabilityOverrideWindow,
   CalendarBlock,
   CalendarEventItem,
   CatalogItem,
@@ -51,8 +53,19 @@ type AvailabilityWindowDraft = {
 
 type AvailabilityManagerPanelProps = {
   windows: AvailabilityWindow[];
-  onSave: (weekday: number, windows: AvailabilityWindowDraft[]) => Promise<void>;
-  onClearDay: (weekday: number) => Promise<void>;
+  overrides: AvailabilityOverride[];
+  onSaveStandard: (weekdays: number[], windows: AvailabilityWindowDraft[]) => Promise<void>;
+  onDeleteStandardDay: (weekday: number) => Promise<void>;
+  onSaveOverride: (
+    date: string,
+    payload: {
+      mode: "work" | "off";
+      label?: string;
+      reason?: string;
+      windows?: AvailabilityOverrideWindow[];
+    },
+  ) => Promise<void>;
+  onDeleteOverride: (date: string) => Promise<void>;
 };
 
 const toIso = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
@@ -72,13 +85,13 @@ const formatDateTime = (value?: string | null) => {
 };
 
 const weekdayLabels = [
-  { value: 1, label: "Seg" },
-  { value: 2, label: "Ter" },
-  { value: 3, label: "Qua" },
-  { value: 4, label: "Qui" },
-  { value: 5, label: "Sex" },
-  { value: 6, label: "Sáb" },
-  { value: 7, label: "Dom" },
+  { value: 1, short: "Seg", long: "Segunda" },
+  { value: 2, short: "Ter", long: "Terça" },
+  { value: 3, short: "Qua", long: "Quarta" },
+  { value: 4, short: "Qui", long: "Quinta" },
+  { value: 5, short: "Sex", long: "Sexta" },
+  { value: 6, short: "Sáb", long: "Sábado" },
+  { value: 7, short: "Dom", long: "Domingo" },
 ];
 
 const createWindowDraft = (window?: Partial<AvailabilityWindow>): AvailabilityWindowDraft => ({
@@ -204,22 +217,35 @@ export const BlockPanel = ({ defaultDate, blocks, onCreate, onDelete }: BlockPan
 
 export const AvailabilityManagerPanel = ({
   windows,
-  onSave,
-  onClearDay,
+  overrides,
+  onSaveStandard,
+  onDeleteStandardDay,
+  onSaveOverride,
+  onDeleteOverride,
 }: AvailabilityManagerPanelProps) => {
-  const [selectedWeekday, setSelectedWeekday] = useState(1);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [drafts, setDrafts] = useState<AvailabilityWindowDraft[]>([createWindowDraft()]);
+  const [overrideDate, setOverrideDate] = useState(new Date().toISOString().slice(0, 10));
+  const [overrideMode, setOverrideMode] = useState<"work" | "off">("off");
+  const [overrideLabel, setOverrideLabel] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideStartTime, setOverrideStartTime] = useState("07:00");
+  const [overrideEndTime, setOverrideEndTime] = useState("17:00");
+  const [overrideSaving, setOverrideSaving] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const referenceWeekday =
+      selectedWeekdays.find((weekday) => windows.some((window) => window.weekday === weekday)) ??
+      selectedWeekdays[0];
     const weekdayWindows = windows
-      .filter((window) => window.weekday === selectedWeekday)
+      .filter((window) => window.weekday === referenceWeekday)
       .sort((left, right) => left.startTime.localeCompare(right.startTime));
 
     setDrafts(
       weekdayWindows.length > 0 ? weekdayWindows.map((window) => createWindowDraft(window)) : [createWindowDraft()],
     );
-  }, [selectedWeekday, windows]);
+  }, [selectedWeekdays, windows]);
 
   const countsByDay = useMemo(
     () =>
@@ -230,16 +256,30 @@ export const AvailabilityManagerPanel = ({
     [windows],
   );
 
+  const standardSummary =
+    selectedWeekdays.length === 7
+      ? "Todos os dias"
+      : weekdayLabels
+          .filter((day) => selectedWeekdays.includes(day.value))
+          .map((day) => day.short)
+          .join(", ");
+
   return (
     <section className="panel compact-panel availability-panel">
       <div className="panel-header">
         <div>
           <p className="eyebrow">Expediente</p>
-          <h2>Horários de atendimento</h2>
+          <h2>Expediente padrão e exceções</h2>
           <p className="panel-copy">
-            Defina as faixas da semana. A agenda só libera o que estiver configurado aqui.
+            Configure o horário padrão uma vez e depois use exceções para feriados ou dias extras de
+            trabalho.
           </p>
         </div>
+      </div>
+
+      <div className="availability-meta">
+        <strong>Aplica-se a</strong>
+        <span>{standardSummary || "Nenhum dia selecionado"}</span>
       </div>
 
       <div className="weekday-strip" role="tablist" aria-label="Dias do expediente">
@@ -247,10 +287,16 @@ export const AvailabilityManagerPanel = ({
           <button
             key={day.value}
             type="button"
-            className={`weekday-pill ${selectedWeekday === day.value ? "is-active" : ""}`}
-            onClick={() => setSelectedWeekday(day.value)}
+            className={`weekday-pill ${selectedWeekdays.includes(day.value) ? "is-active" : ""}`}
+            onClick={() =>
+              setSelectedWeekdays((current) =>
+                current.includes(day.value)
+                  ? current.filter((weekday) => weekday !== day.value)
+                  : [...current, day.value].sort((a, b) => a - b),
+              )
+            }
           >
-            <span>{day.label}</span>
+            <span>{day.short}</span>
             <strong>{countsByDay[day.value] ?? 0}</strong>
           </button>
         ))}
@@ -258,7 +304,7 @@ export const AvailabilityManagerPanel = ({
 
       <div className="availability-editor">
         {drafts.map((draft, index) => (
-          <article className="availability-row" key={`${selectedWeekday}-${index}`}>
+          <article className="availability-row" key={`${selectedWeekdays.join("-")}-${index}`}>
             <div className="split">
               <label>
                 <span>Início</span>
@@ -396,13 +442,13 @@ export const AvailabilityManagerPanel = ({
           onClick={async () => {
             setSaving(true);
             try {
-              await onClearDay(selectedWeekday);
+              await Promise.all(selectedWeekdays.map((weekday) => onDeleteStandardDay(weekday)));
             } finally {
               setSaving(false);
             }
           }}
         >
-          Limpar dia
+          Limpar dias
         </button>
         <button
           className="primary-button"
@@ -411,7 +457,7 @@ export const AvailabilityManagerPanel = ({
           onClick={async () => {
             setSaving(true);
             try {
-              await onSave(selectedWeekday, drafts);
+              await onSaveStandard(selectedWeekdays, drafts);
             } finally {
               setSaving(false);
             }
@@ -419,6 +465,134 @@ export const AvailabilityManagerPanel = ({
         >
           Salvar expediente
         </button>
+      </div>
+
+      <div className="panel-divider" />
+
+      <div className="panel-header compact-header">
+        <div>
+          <p className="eyebrow">Exceções por data</p>
+          <h3>Bloquear folga ou liberar trabalho extra</h3>
+          <p className="panel-copy">
+            Use isso para feriados, sábados extras ou folgas fora do padrão semanal.
+          </p>
+        </div>
+      </div>
+
+      <form
+        className="stack-form"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setOverrideSaving(true);
+
+          try {
+            await onSaveOverride(overrideDate, {
+              mode: overrideMode,
+              label: overrideLabel || undefined,
+              reason: overrideReason || undefined,
+              windows:
+                overrideMode === "work"
+                  ? [
+                      {
+                        startTime: overrideStartTime,
+                        endTime: overrideEndTime,
+                        label: overrideLabel || undefined,
+                        slotDurationMin: 30,
+                        intervalMin: 10,
+                        capacityPerSlot: 1,
+                      },
+                    ]
+                  : undefined,
+            });
+            setOverrideReason("");
+            setOverrideLabel("");
+          } finally {
+            setOverrideSaving(false);
+          }
+        }}
+      >
+        <div className="split">
+          <label>
+            <span>Data</span>
+            <input onChange={(event) => setOverrideDate(event.target.value)} type="date" value={overrideDate} />
+          </label>
+          <label>
+            <span>Tipo</span>
+            <select onChange={(event) => setOverrideMode(event.target.value as "work" | "off")} value={overrideMode}>
+              <option value="off">Bloquear dia</option>
+              <option value="work">Liberar trabalho extra</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>Rótulo</span>
+          <input
+            placeholder={overrideMode === "work" ? "Ex.: sábado extra" : "Ex.: feriado"}
+            value={overrideLabel}
+            onChange={(event) => setOverrideLabel(event.target.value)}
+          />
+        </label>
+
+        {overrideMode === "work" ? (
+          <div className="split">
+            <label>
+              <span>Início</span>
+              <input type="time" value={overrideStartTime} onChange={(event) => setOverrideStartTime(event.target.value)} />
+            </label>
+            <label>
+              <span>Fim</span>
+              <input type="time" value={overrideEndTime} onChange={(event) => setOverrideEndTime(event.target.value)} />
+            </label>
+          </div>
+        ) : null}
+
+        <label>
+          <span>Motivo</span>
+          <input
+            placeholder="Feriado, folga, mutirão, sábado extra..."
+            value={overrideReason}
+            onChange={(event) => setOverrideReason(event.target.value)}
+          />
+        </label>
+
+        <button className="primary-button" disabled={overrideSaving} type="submit">
+          {overrideSaving ? "Salvando..." : "Salvar exceção"}
+        </button>
+      </form>
+
+      <div className="queue-list">
+        {overrides.length === 0 ? (
+          <p className="muted-copy">Nenhuma exceção lançada.</p>
+        ) : (
+          overrides.map((override) => (
+            <article className="queue-card" key={override.id}>
+              <div>
+                <strong>{override.label ?? override.reason ?? override.date}</strong>
+                <p>
+                  {override.date} • {override.mode === "work" ? "liberar trabalho extra" : "bloqueio do dia"}
+                </p>
+              </div>
+              <div className="queue-actions">
+                <button
+                  className="danger-button subtle"
+                  onClick={async () => {
+                    const confirmed = window.confirm("Remover esta exceção da agenda?");
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    await onDeleteOverride(override.date);
+                  }}
+                  type="button"
+                >
+                  Remover
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
     </section>
   );

@@ -1164,6 +1164,31 @@ button {
     radial-gradient(circle at top right, rgba(198, 105, 45, 0.08), transparent 34%);
 }
 
+.availability-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(63, 34, 21, 0.08);
+  margin-bottom: 12px;
+}
+
+.availability-meta strong {
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.availability-meta span {
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+
 .weekday-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1202,6 +1227,23 @@ button {
 .availability-editor {
   display: grid;
   gap: 12px;
+}
+
+.panel-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(63, 34, 21, 0.12), transparent);
+  margin: 18px 0;
+}
+
+.compact-header {
+  margin-bottom: 12px;
+}
+
+.compact-header h3 {
+  margin: 6px 0 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.65rem;
+  line-height: 1;
 }
 
 .availability-row {

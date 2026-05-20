@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { asyncHandler, AppError } from "../lib/errors";
@@ -22,6 +23,32 @@ const windowsPayloadSchema = z.object({
   windows: z.array(windowSchema).default([]),
 });
 
+const overrideWindowSchema = z.object({
+  startTime: z.string().regex(timePattern, "Use o formato HH:mm."),
+  endTime: z.string().regex(timePattern, "Use o formato HH:mm."),
+  label: z.string().optional().nullable(),
+  intervalMin: z.coerce.number().int().min(5).max(240).optional(),
+  slotDurationMin: z.coerce.number().int().min(20).max(240).optional(),
+  capacityPerSlot: z.coerce.number().int().min(1).max(10).optional(),
+});
+
+const overridePayloadSchema = z.object({
+  mode: z.enum(["work", "off"]),
+  label: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  windows: z.array(overrideWindowSchema).optional(),
+});
+
+const mapOverrideWindows = (windows?: z.infer<typeof overridePayloadSchema>["windows"]) =>
+  windows?.map((window) => ({
+    startTime: window.startTime,
+    endTime: window.endTime,
+    label: window.label ?? null,
+    intervalMin: window.intervalMin ?? 10,
+    slotDurationMin: window.slotDurationMin ?? 30,
+    capacityPerSlot: window.capacityPerSlot ?? 1,
+  })) ?? [];
+
 const parseWeekday = (value: string) => {
   const weekday = Number(value);
 
@@ -30,6 +57,35 @@ const parseWeekday = (value: string) => {
   }
 
   return weekday;
+};
+
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+const normalizeDateInput = (value: string) => {
+  const normalized = value.trim();
+
+  if (datePattern.test(normalized)) {
+    return normalized;
+  }
+
+  const isoMatch = normalized.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (isoMatch) {
+    return isoMatch[1];
+  }
+
+  const brMatch = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    const [, day, month, year] = brMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  const dashedMatch = normalized.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (dashedMatch) {
+    const [, day, month, year] = dashedMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  return normalized;
 };
 
 router.get(
@@ -101,6 +157,64 @@ router.delete(
       weekday,
       deletedCount: result.count,
     });
+  }),
+);
+
+router.get(
+  "/availability/overrides",
+  asyncHandler(async (_req, res) => {
+    const overrides = await prisma.availabilityOverride.findMany({
+      orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+    });
+
+    res.json({ overrides });
+  }),
+);
+
+router.put(
+  "/availability/overrides/:date",
+  asyncHandler(async (req, res) => {
+    const date = normalizeDateInput(String(req.params.date));
+    if (!datePattern.test(date)) {
+      throw new AppError(400, "Informe uma data valida no formato YYYY-MM-DD.");
+    }
+
+    const payload = overridePayloadSchema.parse(req.body);
+
+    const override = await prisma.availabilityOverride.upsert({
+      where: { date },
+      create: {
+        date,
+        mode: payload.mode,
+        label: payload.label ?? null,
+        reason: payload.reason ?? null,
+        windows: payload.mode === "work" ? mapOverrideWindows(payload.windows) : Prisma.DbNull,
+      },
+      update: {
+        mode: payload.mode,
+        label: payload.label ?? null,
+        reason: payload.reason ?? null,
+        windows: payload.mode === "work" ? mapOverrideWindows(payload.windows) : Prisma.DbNull,
+      },
+    });
+
+    res.json({ ok: true, override });
+  }),
+);
+
+router.delete(
+  "/availability/overrides/:date",
+  asyncHandler(async (req, res) => {
+    const date = normalizeDateInput(String(req.params.date));
+    if (!datePattern.test(date)) {
+      throw new AppError(400, "Informe uma data valida no formato YYYY-MM-DD.");
+    }
+
+    const result = await prisma.availabilityOverride.deleteMany({
+      where: { date },
+    });
+
+    res.json({ ok: true, deletedCount: result.count, date });
   }),
 );
 
