@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import { asyncHandler } from "../lib/errors";
 import { prisma } from "../lib/prisma";
-import { getAvailabilityForDate } from "../services/calendar-service";
-import { getBusinessDayRange } from "../lib/time";
+import { getAvailabilityForDate, getNextAvailableSlot } from "../services/calendar-service";
+import { getBusinessDayRange, getBusinessDateString } from "../lib/time";
 
 const router = Router();
 
@@ -35,6 +35,12 @@ const dateSchema = z.object({
 });
 
 const availabilitySchema = dateSchema.extend({
+  durationMin: z.coerce.number().int().min(20).max(240).optional(),
+  preferredPeriod: z.enum(["manha", "tarde", "qualquer"]).optional(),
+});
+
+const nextAvailabilitySchema = z.object({
+  date: z.string().optional(),
   durationMin: z.coerce.number().int().min(20).max(240).optional(),
   preferredPeriod: z.enum(["manha", "tarde", "qualquer"]).optional(),
 });
@@ -119,6 +125,33 @@ const normalizeAvailabilityQuery = (query: Record<string, unknown>) => {
   });
 };
 
+const normalizeNextAvailabilityQuery = (query: Record<string, unknown>) => {
+  const preferredPeriod =
+    typeof query.preferredPeriod === "string"
+      ? query.preferredPeriod
+      : typeof query.periodo === "string"
+        ? query.periodo
+        : typeof query.preferencia_periodo === "string"
+          ? query.preferencia_periodo
+          : undefined;
+
+  const date =
+    typeof query.date === "string"
+      ? query.date
+      : typeof query.data === "string"
+        ? query.data
+        : typeof query.data_desejada === "string"
+          ? query.data_desejada
+          : undefined;
+
+  return nextAvailabilitySchema.parse({
+    date: normalizeDateInput(date) ?? getBusinessDateString(new Date()),
+    durationMin:
+      query.durationMin ?? query.duracaoMin ?? query.duracao_min ?? query.duracao,
+    preferredPeriod: normalizePeriodInput(preferredPeriod),
+  });
+};
+
 const normalizeDateQuery = (query: Record<string, unknown>) =>
   dateSchema.parse({
     date: normalizeDateInput(
@@ -190,6 +223,16 @@ router.get(
       preferredPeriod: availability.preferredPeriod,
       slots: availability.horarios_disponiveis,
     });
+  }),
+);
+
+router.get(
+  "/calendar/next-available",
+  asyncHandler(async (req, res) => {
+    const query = normalizeNextAvailabilityQuery(req.query as Record<string, unknown>);
+    const availability = await getNextAvailableSlot(query);
+
+    res.json(availability);
   }),
 );
 

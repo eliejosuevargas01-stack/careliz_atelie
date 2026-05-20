@@ -1,5 +1,4 @@
-import type { AvailabilityWindow, CalendarBlock } from "@prisma/client";
-import { addMinutes, differenceInMinutes, isAfter, isBefore, isEqual } from "date-fns";
+import { addDays, addMinutes, differenceInMinutes, isAfter, isBefore, isEqual } from "date-fns";
 
 import {
   DEFAULT_SLOT_DURATION_MINUTES,
@@ -29,6 +28,13 @@ type AvailabilityInput = {
   date: string;
   durationMin?: number;
   preferredPeriod?: "manha" | "tarde" | "qualquer";
+};
+
+type NextAvailableInput = {
+  date?: string;
+  durationMin?: number;
+  preferredPeriod?: "manha" | "tarde" | "qualquer";
+  searchLimitDays?: number;
 };
 
 const activeEventWhere = {
@@ -231,4 +237,44 @@ export const getAvailabilityForDate = async ({
     options_map: optionsMap,
     occupiedCount: events.length + blocks.length,
   };
+};
+
+export const getNextAvailableSlot = async ({
+  date,
+  durationMin = 30,
+  preferredPeriod = "qualquer",
+  searchLimitDays = 60,
+}: NextAvailableInput) => {
+  const startDate = date ?? getBusinessDateString(new Date());
+  const today = getBusinessDateString(new Date());
+  const searchFromDate = startDate < today ? today : startDate;
+
+  for (let offset = 0; offset <= searchLimitDays; offset += 1) {
+    const candidateDate = getBusinessDateString(
+      addDays(combineBusinessDateTime(searchFromDate, "00:00"), offset),
+    );
+
+    const availability = await getAvailabilityForDate({
+      date: candidateDate,
+      durationMin,
+      preferredPeriod,
+    });
+
+    if (availability.slots.length > 0) {
+      return {
+        requestedDate: searchFromDate,
+        nextDate: candidateDate,
+        nextSlot: availability.slots[0],
+        searchedDays: offset + 1,
+        durationMin,
+        preferredPeriod,
+        availability,
+      };
+    }
+  }
+
+  throw new AppError(
+    404,
+    "Nenhum horario disponivel foi encontrado no periodo pesquisado.",
+  );
 };
