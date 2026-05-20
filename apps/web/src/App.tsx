@@ -45,6 +45,26 @@ const formatHour = (value: string) =>
     timeZone: "America/Sao_Paulo",
   });
 
+const toAudioSource = (notification: NotificationAlert) => {
+  if (notification.audioUrl) {
+    return notification.audioUrl;
+  }
+
+  if (notification.audioBase64) {
+    const mimeType = notification.audioMimeType?.trim() || "audio/mpeg";
+    const base64 = notification.audioBase64.trim();
+    if (!base64) {
+      return null;
+    }
+
+    return base64.startsWith("data:")
+      ? base64
+      : `data:${mimeType};base64,${base64}`;
+  }
+
+  return null;
+};
+
 const toBusinessDateKey = (value?: string | null) => {
   if (!value) {
     return null;
@@ -178,8 +198,9 @@ export default function App() {
       }
 
       try {
-        if (currentNotification.audioUrl) {
-          const audio = new Audio(currentNotification.audioUrl);
+        const audioSource = toAudioSource(currentNotification);
+        if (audioSource) {
+          const audio = new Audio(audioSource);
           audio.preload = "auto";
           await audio.play();
           return;

@@ -170,6 +170,8 @@ model NotificationAlert {
   title                 String?
   message               String
   audioUrl              String?
+  audioBase64           String?
+  audioMimeType         String?
   source                String?
   repeatIntervalSeconds Int      @default(6)
   status                String   @default("pending")

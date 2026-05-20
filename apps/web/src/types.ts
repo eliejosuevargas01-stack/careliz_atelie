@@ -163,6 +163,8 @@ export type NotificationAlert = {
   title?: string | null;
   message: string;
   audioUrl?: string | null;
+  audioBase64?: string | null;
+  audioMimeType?: string | null;
   source?: string | null;
   repeatIntervalSeconds?: number;
   status: string;
