@@ -1,0 +1,47 @@
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Install openssl for Prisma
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+
+RUN npm install
+
+COPY . .
+
+# Generate Prisma client and build API
+WORKDIR /app/apps/api
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install openssl for Prisma in runner
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+
+RUN npm install --production
+
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+WORKDIR /app/apps/api
+
+# Run seed if necessary, else start the server
+# We use a script to ensure the db is pushed/seeded before starting
+RUN echo '#!/bin/sh\n\
+npx prisma db push\n\
+node dist/server.js\n\
+' > start.sh && chmod +x start.sh
+
+EXPOSE 4000
+CMD ["./start.sh"]

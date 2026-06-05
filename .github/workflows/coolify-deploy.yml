@@ -1,0 +1,21 @@
+name: Coolify Deploy Webhook
+
+on:
+  push:
+    branches:
+      - main # ou a branch principal do seu repositório
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify Webhook
+        # O Coolify te dá uma URL de webhook na tela de configuração do serviço
+        # Adicione ela como uma secret (COOLIFY_WEBHOOK_URL) no GitHub (Settings > Secrets)
+        run: |
+          if [ -n "${{ secrets.COOLIFY_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}"
+          else
+            echo "A URL do Webhook do Coolify nao esta configurada nos secrets do GitHub."
+            echo "Pode ignorar este aviso se voce conectou o Coolify diretamente ao App do GitHub (ele escuta pushes automaticamente)."
+          fi
