@@ -1,33 +1,32 @@
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install openssl for Prisma
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Necessário para compilar dependencias nativas e sqlite no alpine
+RUN apk add --no-cache python3 make g++ openssl
 
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
 
-RUN npm install
+# Instalar dependencias
+RUN npm ci
 
 COPY . .
 
-# Generate Prisma client and build API
 WORKDIR /app/apps/api
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Install openssl for Prisma in runner
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl
 
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
 
-RUN npm install --production
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
@@ -36,8 +35,6 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 WORKDIR /app/apps/api
 
-# Run seed if necessary, else start the server
-# We use a script to ensure the db is pushed/seeded before starting
 RUN echo '#!/bin/sh\n\
 npx prisma db push\n\
 node dist/server.js\n\
